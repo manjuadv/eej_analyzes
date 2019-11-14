@@ -1,45 +1,28 @@
 import magnetic as mag
 from os import path
 
-def readDayDataLocalTime(targetFileList, comp):
+def getData(fileList):
+    import pandas as pd
     import numpy as np
-    #dayFiles = glob.glob('*' + (year + month + day) + '*')
-    # filePath = stationList[stCode] + '\\' + minOrSecDB + '\\' + year + '\\'
-     
-    # previousDay = datetime.datetime.strptime(year + '-'  + month + '-' + day, '%Y-%m-%d') - datetime.timedelta(days=1)
-    # previousDayStr = previousDay.strftime('%Y%m%d')
+    filesFailed = []
+    dataSet = {'Date_Time' : [],
+            'H' : [], 'D' : [], 'Z' : [], 'F' : []}
+    for fileName in fileList:
+        if path.exists(fileName):  
+            ReadObj = mag.IAGA2002()
+            ReadObj.read(fileName)
 
-    #dayFiles = [path.basename(x) for x in glob.glob(filePath + '*' + (year + month + day) + '*') or glob.glob(filePath + '*' + (previousDayStr) + '*')]
- 
-    dayFiles = targetFileList
-    boolFistFileOK = False
-    boolSecondFileOk = False
-    if path.exists(dayFiles[0]):
-        boolFistFileOK = True
-    if path.exists(dayFiles[1]):
-        boolSecondFileOk = True
-    
-    if boolFistFileOK and boolSecondFileOk :
-        print("File count : " + str(len(dayFiles)))
-    elif boolFistFileOK :
-        print("Only file '" + dayFiles[0] + "' exists")
-    elif boolSecondFileOk :
-        print("Only file '" + dayFiles[1] + "' exists")
-    else:
-        print("Data files not exist")
-        return [[],[]]
-
-    timeSet = []
-    dataSet = {"h":[],"d":[],"z":[],"f":[]}
-    for fileName in dayFiles :
-        print(fileName)
-        ReadObj = mag.IAGA2002()
-        ReadObj.read(fileName)
-        print(ReadObj.get('f'))
-        timeSet = np.append(timeSet,ReadObj.get(ReadObj.datetime_index))
-        if len(comp) == 1:
-            dataSet[comp] = np.append(dataSet[comp],ReadObj.get(comp))
+            dataSet['Date_Time'] = np.append(dataSet['Date_Time'],ReadObj.get(ReadObj.datetime_index))
+            dataSet['H'] = np.append(dataSet['H'],ReadObj.get('h'))
+            dataSet['D'] = np.append(dataSet['D'],ReadObj.get('d'))
+            dataSet['Z'] = np.append(dataSet['Z'],ReadObj.get('z'))
+            dataSet['F'] = np.append(dataSet['F'],ReadObj.get('f'))
+            print(fileName)
         else:
-            for c in comp:
-                dataSet[c] = np.append(dataSet[c],ReadObj.get(c))
-    return [timeSet, dataSet]
+            filesFailed.append(fileName)
+    
+    if len(filesFailed) > 0:
+        print ('Error : Following ' + str(len(filesFailed)) + ' file(s) expected to read, but not found.')
+        for f in filesFailed:
+            print('Error : data file "' + f + '" was not found')
+    return pd.DataFrame(data=dataSet, columns=['Date_Time','H','D','Z','F'])

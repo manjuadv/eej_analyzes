@@ -33,9 +33,11 @@ def processArgvs(argvs):
             # print(dataSet)
 
             targetFileList = dbUtils.getFileListForDay('CMB', year, month, day, targetTimeZone=pytz.timezone('Asia/Colombo'))
+            targetFileList.append('sas')
+            targetFileList.append('afsfs')
             print(targetFileList)
-            timeSet, dataSet = dbRead.readDayDataLocalTime(targetFileList, 'hd')
-            print(timeSet)
+            dataFrame = dbRead.getData(targetFileList)
+            print(dataFrame)
 
         else :
             year = parts[0]
