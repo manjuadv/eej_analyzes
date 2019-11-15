@@ -2,26 +2,8 @@ from os import path
 import pytz
 from datetime import datetime, timedelta
 
-def printStationList():
-    print('List of stations feeded in to DB')
-    print('---------------------------------')
-    for s in stationList:
-        print(s + '\t : ' + stationList[s])
-
-def getFileListForYear(stationCode, year, targetTimeZone=pytz.UTC):
-    expectedFileList = getExpectedFileNameList(stationCode, targetTimeZone, year)
-    return expectedFileList
-
-def getFileListForMonth(stationCode, year, month, targetTimeZone=pytz.UTC):
-    expectedFileList = getExpectedFileNameList(stationCode, targetTimeZone, year, month=month)
-    return expectedFileList
-
-def getFileListForDay(stationCode, year, month, day, targetTimeZone=pytz.UTC):
-    expectedFileList = getExpectedFileNameList(stationCode, targetTimeZone, year, month=month, day=day)
-    return expectedFileList
-
-def getExpectedFileNameList(stationCode, targetTimeZone, year, month=None, day=None):
-    stationDBPath = getStationDBPath(stationCode)
+def getExpectedFileNameList(stationList, stationCode, minOrSecDB, year, month=None, day=None, targetTimeZone=pytz.UTC):
+    stationDBPath = getStationDBPath(stationList, stationCode, minOrSecDB)
     if not stationDBPath:
         return []
     else:
@@ -79,12 +61,13 @@ def getDayFileName(stationCode, day):
     dayFileName = stationCode + day.strftime('%Y%m%d') + 'pmin.min'
     return dayFileName
 
-def getStationDBPath(stationCode):
+def getStationDBPath(stationList, stationCode, minOrSecDB):
     try:
         stationFilePath = stationList[stationCode] + '\\' + minOrSecDB + '\\'
-    except :
+    except Exception as e:
         print('Requested stations are not in the system. Following station are only feeded.')
-        printStationList()
+        print(e)
+        printStationList(stationList)
         return ''
 
     if not stationCode:
@@ -92,14 +75,20 @@ def getStationDBPath(stationCode):
         return ''
     elif not stationCode in stationList:
         print('Requested stations are not in the system. Following station are only feeded.')
-        printStationList()
+        printStationList(stationList)
         return ''
     elif not path.exists(stationFilePath):
         print('Data files are not in the expected path "' + stationFilePath + '"')
         return ''
     return stationFilePath
 
-# For any station to be used with this python program, it should be listed below with the path to the base folder of station's file list
-stationList = {'CMB' : 'C:\\Data\\Study\\Post Grad\\MAGDAS\\MAGDAS data\\CMB_MAGDAS_IAGA_1s_1m\\CMB',
-'DAV' : 'C:\\Data\\Study\\Post Grad\\MAGDAS\\MAGDAS data\\DAV_MAGDAS_IAGA_1s_1m\\DAV'}
-minOrSecDB = 'Min' # 'Sec' (For one second resolution DB)
+def printStationList(stationList):
+    print('List of stations feeded in to DB')
+    print('---------------------------------')
+    for s in stationList:
+        print(s + '\t : ' + stationList[s])
+
+def truncateAdditionalData(dataFrame, targetStartTime, targetEndTime):
+    print('Truncating to select data only within ' + targetStartTime.strftime('%Y-%m-%d %H:%M') + '-' + targetEndTime.strftime('%Y-%m-%d %H:%M'))
+    truncatedDataFrame = dataFrame#['2016-03-06':'2016-03-07'].between_time('00:00','19:00')
+    return truncatedDataFrame

@@ -25,4 +25,4 @@ def getData(fileList):
         print ('Error : Following ' + str(len(filesFailed)) + ' file(s) expected to read, but not found.')
         for f in filesFailed:
             print('Error : data file "' + f + '" was not found')
-    return pd.DataFrame(data=dataSet, columns=['Date_Time','H','D','Z','F'])
+    return pd.DataFrame(data=dataSet, index=dataSet['Date_Time'], columns=['Date_Time','H','D','Z','F'])
