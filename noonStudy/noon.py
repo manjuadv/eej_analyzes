@@ -24,17 +24,8 @@ def processArgvs(argvs):
             if len(day) < 2:
                 day = '0' + day
             print('Collecting data for day ' + year + '-' + month + '-' + day)
-            
-            #timeSet, dataSet = db.readDayDataLocalTime('CMB', year, month, day, 'hd')
-
-            # if len(timeSet)<1:
-            #     print('No data presented for the graph')
-            #     return
-            # print(dataSet)
 
             targetFileList = dbUtils.getFileListForDay('CMB', year, month, day, targetTimeZone=pytz.timezone('Asia/Colombo'))
-            targetFileList.append('sas')
-            targetFileList.append('afsfs')
             print(targetFileList)
             dataFrame = dbRead.getData(targetFileList)
             print(dataFrame)
