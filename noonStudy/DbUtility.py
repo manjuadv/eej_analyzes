@@ -100,6 +100,6 @@ def getStationDBPath(stationCode):
     return stationFilePath
 
 # For any station to be used with this python program, it should be listed below with the path to the base folder of station's file list
-stationList = {'CMB' : 'C:\Data\Study\Post Grad\MAGDAS\MAGDAS data\CMB_MAGDAS_IAGA_1s_1m\CMB',
-'DAV' : 'C:\Data\Study\Post Grad\MAGDAS\MAGDAS data\DAV_MAGDAS_IAGA_1s_1m\DAV'}
+stationList = {'CMB' : 'C:\\Data\\Study\\Post Grad\\MAGDAS\\MAGDAS data\\CMB_MAGDAS_IAGA_1s_1m\\CMB',
+'DAV' : 'C:\\Data\\Study\\Post Grad\\MAGDAS\\MAGDAS data\\DAV_MAGDAS_IAGA_1s_1m\\DAV'}
 minOrSecDB = 'Min' # 'Sec' (For one second resolution DB)
