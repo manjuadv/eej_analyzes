@@ -88,7 +88,11 @@ def printStationList(stationList):
     for s in stationList:
         print(s + '\t : ' + stationList[s])
 
-def truncateAdditionalData(dataFrame, targetStartTime, targetEndTime):
-    print('Truncating to select data only within ' + targetStartTime.strftime('%Y-%m-%d %H:%M') + '-' + targetEndTime.strftime('%Y-%m-%d %H:%M'))
-    truncatedDataFrame = dataFrame#['2016-03-06':'2016-03-07'].between_time('00:00','19:00')
-    return truncatedDataFrame
+def truncateAdditionalData(dataFrame, startTime, endTime):
+    print('Truncating to select data only within ' + startTime.strftime('%Y-%m-%d %H:%M') + ' - ' + endTime.strftime('%Y-%m-%d %H:%M'))
+    #truncatedDataFrame = dataFrame[startTime.strftime('%Y-%m-%d'):endTime.strftime('%Y-%m-%d')].between_time(startTime.strftime('%H:%M'),startTime.strftime('%H:%M'))
+    return dataFrame.loc[(dataFrame['Date_Time'] >= startTime) & (dataFrame['Date_Time'] <= endTime)]
+
+def convertToTimezone(dataFrame, timezone):
+    dataFrame['Date_Time'] = [x.astimezone(timezone) for x in dataFrame['Date_Time']]    
+    return dataFrame

@@ -27,10 +27,13 @@ def processArgvs(argvs):
             print('Collecting data for day ' + year + '-' + month + '-' + day)
 
             dataFrame = magdasDB.getMinData('CMB', year, month, day, targetTimeZone=pytz.timezone('Asia/Colombo'))
-            print(dataFrame)
+            #print(dataFrame)
 
-            import pyplotWrap as plotter
-            plotter.dialyCompMaxAndNoon(dataFrame['Date_Time'],dataFrame['H'],'H')
+            import plotter
+            plotter.dailyVariationAnalyzes(dataFrame, 'H')
+
+            #import pyplotWrap as plotter
+            #plotter.dialyCompMaxAndNoon(dataFrame['Date_Time'],dataFrame['H'],'H')
 
         else :
             year = parts[0]

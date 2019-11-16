@@ -9,12 +9,12 @@ def dialyCompMaxAndNoon(timeSet, dataSet, componentName):
     import matplotlib.dates as mdates
 
     localTZ = pytz.timezone('Asia/Colombo')
-    localTimeSet = [pytz.UTC.localize(x) for x in timeSet]
-    timesInLocalTZ = [x.astimezone(localTZ) for x in localTimeSet]
+    #localTimeSet = [pytz.UTC.localize(x) for x in timeSet]
+    timesInLocalTZ = timeSet#[x.astimezone(localTZ) for x in localTimeSet]
     lastRecordIndex = len(timeSet) - 1
 
     subaru = Observer(longitude=80.07*u.deg, latitude=6.97*u.deg, elevation=0*u.m, name="Subaru", 
-    timezone="Asia/Colombo")
+    timezone=localTZ)
     noonTimeInTimeObj = subaru.noon(Time(timeSet[lastRecordIndex]), which='previous')
 
     noonTimeUTC = noonTimeInTimeObj.to_datetime(timezone = pytz.timezone('UTC'))
