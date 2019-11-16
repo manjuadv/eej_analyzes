@@ -1,6 +1,6 @@
 import sys
-import DbUtility as dbUtils
-import DBread as dbRead
+#import DbUtility as dbUtils
+#import DBread as dbRead
 import pytz
 
 def main():
@@ -11,8 +11,9 @@ def main():
         print('No parameter provided. Please check the instructions.')
 
 def processArgvs(argvs):
+    import MagdasDB as magdasDB
     if argvs[0] == "stl" :
-        dbUtils.printStationList()
+        magdasDB.printStationList()
     elif '-' in argvs[0] :
         parts = argvs[0].split("-")
         if len(parts) > 2:
@@ -25,10 +26,14 @@ def processArgvs(argvs):
                 day = '0' + day
             print('Collecting data for day ' + year + '-' + month + '-' + day)
 
-            targetFileList = dbUtils.getFileListForDay('CMB', year, month, day, targetTimeZone=pytz.timezone('Asia/Colombo'))
-            print(targetFileList)
-            dataFrame = dbRead.getData(targetFileList)
-            print(dataFrame)
+            dataFrame = magdasDB.getMinData('CMB', year, month, day, targetTimeZone=pytz.timezone('Asia/Colombo'))
+            #print(dataFrame)
+
+            import plotter
+            plotter.dailyVariationAnalyzes(dataFrame, 'H')
+
+            #import pyplotWrap as plotter
+            #plotter.dialyCompMaxAndNoon(dataFrame['Date_Time'],dataFrame['H'],'H')
 
         else :
             year = parts[0]
