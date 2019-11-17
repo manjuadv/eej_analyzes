@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def dailyVariationAnalyzes(dataFrame, componentName):
+def dailyVariationAnalyzes(dataFrame, componentName, outliers):
     from astroplan import Observer
     import astropy.units as u
     from astropy.time import Time
@@ -30,6 +30,11 @@ def dailyVariationAnalyzes(dataFrame, componentName):
     h_fmt = mdates.DateFormatter('%d %H:%M:%S', localTZ)
     ax.xaxis.set_major_locator(hours)
     ax.xaxis.set_major_formatter(h_fmt)
+    
+    y_min, y_max = ax.get_ylim()
+    outliers[componentName] = y_min
+    kw = dict(marker='o', linestyle='none', color='r', alpha=0.3)
+    ax.plot(outliers[componentName] , label= componentName + '-outlier', **kw)
 
     minValueIndex = dataFrame[componentName].idxmin() 
     maxValueIndex = dataFrame[componentName].idxmax()

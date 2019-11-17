@@ -15,6 +15,7 @@ def processArgvs(argvs):
     if argvs[0] == "stl" :
         magdasDB.printStationList()
     elif '-' in argvs[0] :
+        component  = 'H'
         parts = argvs[0].split("-")
         if len(parts) > 2:
             year = parts[0]
@@ -29,8 +30,12 @@ def processArgvs(argvs):
             dataFrame = magdasDB.getMinData('CMB', year, month, day, targetTimeZone=pytz.timezone('Asia/Colombo'))
             #print(dataFrame)
 
+            import dataProcess as processor
+            dataFrame, outliers = processor.get_outliers_quantile(dataFrame, component)
+            #print(dataFrame[dataFrame[component] == None])
+
             import plotter
-            plotter.dailyVariationAnalyzes(dataFrame, 'H')
+            plotter.dailyVariationAnalyzes(dataFrame, component, outliers)
 
             #import pyplotWrap as plotter
             #plotter.dialyCompMaxAndNoon(dataFrame['Date_Time'],dataFrame['H'],'H')
