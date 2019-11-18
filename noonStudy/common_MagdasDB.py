@@ -1,5 +1,5 @@
-import DbUtility as dbUtils
-import DBread as dbRead
+import common_DbUtility as dbUtils
+import common_DBread as dbRead
 import pytz
 from datetime import datetime
 

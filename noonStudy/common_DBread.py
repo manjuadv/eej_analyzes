@@ -1,4 +1,4 @@
-import magnetic as mag
+import common_Magnetic as mag
 from os import path
 
 def getData(fileList):
