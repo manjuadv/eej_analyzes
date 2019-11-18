@@ -11,13 +11,13 @@ def main():
         print('No parameter provided. Please check the instructions.')
 
 def processArgvs(argvs):
-    import MagdasDB as magdasDB
+    import common_MagdasDB as magdasDB
     if argvs[0] == "stl" :
         magdasDB.printStationList()
     elif '-' in argvs[0] :
 
         import numpy as np
-        import dataProcess as processor
+        import common_DataProcess as processor
 
         component  = 'H'
         parts = argvs[0].split("-")
@@ -39,7 +39,7 @@ def processArgvs(argvs):
             outliers = processor.get_outliers_normal_distribution(dataFrame, component, SD_range_scalar=3)
             dataFrame.loc[outliers.index, component] = np.nan # any value can be assigned
 
-            import plotter
+            import noon_study_plot as plotter
             plotter.dailyVariationAnalyzes(dataFrame, component, outliers)
 
             #import pyplotWrap as plotter

@@ -44,10 +44,10 @@ def plotMonth(year, month, component="H") :
 
 def plotDay(year, month, day, component="H") :
 
-    import dataProcess as processor
-    import MagdasDB as magdasDB
+    import common_DataProcess as processor
+    import common_MagdasDB as magdasDB
     import numpy as np
-    import plotter
+    import basic_variation_plot as plotter
     import pytz
 
     print('Plotting month : ' + year + '-' + month + '-' + day + ', component : ' + component)
