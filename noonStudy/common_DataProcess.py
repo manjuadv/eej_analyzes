@@ -6,10 +6,13 @@ def get_outliers_min_max_limit(df_in, col_name, min=0, max = 100000):
 
 def get_outliers_abnormal_ignore(data_frame, component, min=0, max = 100000):
     import pandas as pd
-    new_df = pd.DataFrame()
-    print(new_df)
-    for row in data_frame:
-        pass
+    #new_df = pd.DataFrame(columns=['Date_Time','H','D','Z','F'])
+    index_list_to_drop = []
+    for index, row in data_frame.iterrows():
+        #print (str(index) + ' : ' + str(row['H']) + ',' + str(row['D']))
+        if row[component]< 40860 or row[component]>40940:
+            index_list_to_drop.append(index)
+    return data_frame.drop(index_list_to_drop)
 
 
 def get_outliers_median(df_in, col_name):

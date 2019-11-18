@@ -52,10 +52,12 @@ def plotDay(year, month, day, component="H") :
 
     print('Plotting month : ' + year + '-' + month + '-' + day + ', component : ' + component)
     dataFrame = magdasDB.getMinData('CMB', year, month, day, targetTimeZone=pytz.timezone('Asia/Colombo'))
-    # outliers = processor.get_outliers_rolling_medians(dataFrame, component, threshold=1.5)
+    #outliers = processor.get_outliers_rolling_medians(dataFrame, component, threshold=1.5)
     # dataFrame.loc[outliers.index, component] = np.nan # any value can be assigned
     # plotter.daily_graph(dataFrame, component, outliers)
     outliers = processor.get_outliers_abnormal_ignore(dataFrame, component)
+    print(outliers)
+    plotter.daily_graph(dataFrame, component, outliers)
     #plotter.generate_guassian_fit_curve_for_data(dataFrame, component)
     
 def printParameterHelp() :
