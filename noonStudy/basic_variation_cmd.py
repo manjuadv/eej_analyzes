@@ -37,10 +37,44 @@ def processArgvs(argvs):
         print('Incorrect combination of parameters. First paramter supposed to be a date.')
 
 def plotYear(year, component="H") :
+
+    import common_DataProcess as processor
+    import common_MagdasDB as magdasDB
+    import pytz
+    import basic_variation_plot as plotter
+    import pandas as pd
+    import numpy as np
+
     print('Plotting year : ' + year + ', component : ' + component)
+    dataFrame = magdasDB.getMinData('CMB', year, targetTimeZone=pytz.timezone('Asia/Colombo'))
+
+    outliers_by_abnormal = processor.get_outliers_abnormal_ignore(dataFrame, component,min=40000, max=45000)
+    outliers_by_slope = processor.get_outliers_abnormal_slope_ignore(dataFrame, component,min=40000, max=45000)
+    outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
+    outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
+    dataFrame.loc[outliers.index, component] = np.nan
+
+    plotter.yearly_graph(dataFrame, component, outliers=outliers)
     
 def plotMonth(year, month, component="H") :
+
+    import common_DataProcess as processor
+    import common_MagdasDB as magdasDB
+    import pytz
+    import basic_variation_plot as plotter
+    import pandas as pd
+    import numpy as np
+
     print('Plotting month : ' + year + '-' + month + ', component : ' + component)
+    dataFrame = magdasDB.getMinData('CMB', year, month, targetTimeZone=pytz.timezone('Asia/Colombo'))
+
+    outliers_by_abnormal = processor.get_outliers_abnormal_ignore(dataFrame, component,min=40000, max=45000)
+    outliers_by_slope = processor.get_outliers_abnormal_slope_ignore(dataFrame, component,min=40000, max=45000)
+    outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
+    outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
+    dataFrame.loc[outliers.index, component] = np.nan
+
+    plotter.monthly_graph(dataFrame, component, outliers)
 
 def plotDay(year, month, day, component="H") :
 
@@ -49,14 +83,19 @@ def plotDay(year, month, day, component="H") :
     import numpy as np
     import basic_variation_plot as plotter
     import pytz
+    import pandas as pd
 
-    print('Plotting month : ' + year + '-' + month + '-' + day + ', component : ' + component)
+    print('Plotting day : ' + year + '-' + month + '-' + day + ', component : ' + component)
     dataFrame = magdasDB.getMinData('CMB', year, month, day, targetTimeZone=pytz.timezone('Asia/Colombo'))
     #outliers = processor.get_outliers_rolling_medians(dataFrame, component, threshold=1.5)
     # dataFrame.loc[outliers.index, component] = np.nan # any value can be assigned
     # plotter.daily_graph(dataFrame, component, outliers)
-    outliers = processor.get_outliers_abnormal_ignore(dataFrame, component)
-    print(outliers)
+    outliers_by_abnormal = processor.get_outliers_abnormal_ignore(dataFrame, component,min=40000, max=45000)
+    outliers_by_slope = processor.get_outliers_abnormal_slope_ignore(dataFrame, component,min=40000, max=45000)
+    outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
+    outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
+    #print(outliers)
+    dataFrame.loc[outliers.index, component] = np.nan
     plotter.daily_graph(dataFrame, component, outliers)
     #plotter.generate_guassian_fit_curve_for_data(dataFrame, component)
     

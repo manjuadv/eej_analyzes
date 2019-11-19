@@ -18,8 +18,14 @@ def getExpectedFileNameList(stationList, stationCode, minOrSecDB, year, month=No
                 pass
             elif (len(month)>0) and not day:
                 # file list for month
+                import calendar as calendar
+
+                fileList = []
                 print('Generating file list for month ' + year + '-' + month + '. No extra file append needed (since UTC).')
-                pass
+                daysCountForMonth = calendar.monthrange(int(year), int(month))[1]
+                for d in range(1, (daysCountForMonth + 1)):
+                    fileList.append(filePath + getDayFileName(stationCode, datetime(int(year), int(month), d)))
+                return fileList
             else:
                 # file list for day
                 targetDay = datetime(int(year), int(month), int(day))
@@ -30,12 +36,59 @@ def getExpectedFileNameList(stationList, stationCode, minOrSecDB, year, month=No
             print('Requested time zone = ' + timeZoneOffeset)
             if not month and not day :
                 # file list for year
-                print('Generating file list for month ' + year + '. Extra file append needed.')
-                pass
+                import calendar as calendar
+
+                print('Generating file list for year ' + year + '. Extra file append needed.')
+                
+                if timeZoneOffeset[0]=='+':
+                    # append previous day
+                    print('Generating file list for year ' + year + '. Previous day file appending.')
+                    firstDayOfYear = datetime(int(year), 1, 1)
+                    previousDayOf1st = firstDayOfYear - timedelta(days=1)                    
+                    previousDayOfFirstDayFile= filePath + getDayFileName(stationCode, previousDayOf1st)
+                    fileList = [previousDayOfFirstDayFile]
+                    for m in range(1, 13):                
+                        daysCountForMonth = calendar.monthrange(int(year), m)[1]
+                        for d in range(1, (daysCountForMonth + 1)):
+                            fileList.append(filePath + getDayFileName(stationCode, datetime(int(year), m, d)))
+                    return fileList
+                elif timeZoneOffeset[0]=='-':
+                    # append next day
+                    print('Generating file list for year ' + year + '. Next day file appending.')
+                    daysCountForMonth = calendar.monthrange(int(year), int(month))[1]
+                    lastDayOfMonth = datetime(int(year), int(month), daysCountForMonth)
+                    nextDayOfLast = lastDayOfMonth + timedelta(days=1)                    
+                    nextDayOfLastFile= filePath + getDayFileName(stationCode, nextDayOfLast)
+                    fileList = [nextDayOfLastFile]                    
+                    for d in range(1, (daysCountForMonth + 1)):
+                        fileList.append(filePath + getDayFileName(stationCode, datetime(int(year), int(month), d)))
+                    return fileList
             elif (len(month)>0) and not day:
                 # file list for month
-                print('Generating file list for month ' + year + '-' + month + '. Extra file append needed')
-                pass
+                import calendar as calendar                
+                
+                if timeZoneOffeset[0]=='+':
+                    # append previous day
+                    print('Generating file list for month ' + year + '-' + month + '. Previous day file appending.')
+                    firstDayOfMonth = datetime(int(year), int(month), 1)
+                    previousDayOf1st = firstDayOfMonth - timedelta(days=1)                    
+                    previousDayOfFirstDayFile= filePath + getDayFileName(stationCode, previousDayOf1st)
+                    fileList = [previousDayOfFirstDayFile]
+                    daysCountForMonth = calendar.monthrange(int(year), int(month))[1]
+                    for d in range(1, (daysCountForMonth + 1)):
+                        fileList.append(filePath + getDayFileName(stationCode, datetime(int(year), int(month), d)))
+                    return fileList
+                elif timeZoneOffeset[0]=='-':
+                    # append next day
+                    print('Generating file list for month ' + year + '-' + month + '. Next day file appending.')
+                    daysCountForMonth = calendar.monthrange(int(year), int(month))[1]
+                    lastDayOfMonth = datetime(int(year), int(month), daysCountForMonth)
+                    nextDayOfLast = lastDayOfMonth + timedelta(days=1)                    
+                    nextDayOfLastFile= filePath + getDayFileName(stationCode, nextDayOfLast)
+                    fileList = [nextDayOfLastFile]                    
+                    for d in range(1, (daysCountForMonth + 1)):
+                        fileList.append(filePath + getDayFileName(stationCode, datetime(int(year), int(month), d)))
+                    return fileList
             else:
                 # file list for day
                 if timeZoneOffeset[0]=='+':
@@ -91,7 +144,9 @@ def printStationList(stationList):
 def truncateAdditionalData(dataFrame, startTime, endTime):
     print('Truncating to select data only within ' + startTime.strftime('%Y-%m-%d %H:%M') + ' - ' + endTime.strftime('%Y-%m-%d %H:%M'))
     #truncatedDataFrame = dataFrame[startTime.strftime('%Y-%m-%d'):endTime.strftime('%Y-%m-%d')].between_time(startTime.strftime('%H:%M'),startTime.strftime('%H:%M'))
-    return dataFrame.loc[(dataFrame['Date_Time'] >= startTime) & (dataFrame['Date_Time'] <= endTime)]
+    result = dataFrame.loc[(dataFrame['Date_Time'] >= startTime) & (dataFrame['Date_Time'] <= endTime)]
+    print('Truncation done')
+    return result
 
 def convertToTimezone(dataFrame, timezone):
     dataFrame['Date_Time'] = [x.astimezone(timezone) for x in dataFrame['Date_Time']]    
