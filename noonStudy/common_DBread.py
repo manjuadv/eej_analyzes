@@ -18,7 +18,7 @@ def getData(fileList):
             dataSet['D'] = np.append(dataSet['D'],ReadObj.get('d'))
             dataSet['Z'] = np.append(dataSet['Z'],ReadObj.get('z'))
             dataSet['F'] = np.append(dataSet['F'],ReadObj.get('f'))
-            print(fileName)
+            print(fileName + ' completed')
         else:
             filesFailed.append(fileName)
     

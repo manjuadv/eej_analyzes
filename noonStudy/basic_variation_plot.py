@@ -1,6 +1,11 @@
 import matplotlib.pyplot as plt
 
-def daily_graph(dataFrame, componentName, outliers):
+def daily_graph(dataFrame, componentName, outliers=None):
+
+    if dataFrame.empty:
+        print('No data is available to plot')
+        return
+
     from astroplan import Observer
     import astropy.units as u
     from astropy.time import Time
@@ -31,10 +36,11 @@ def daily_graph(dataFrame, componentName, outliers):
     ax.xaxis.set_major_locator(hours)
     ax.xaxis.set_major_formatter(h_fmt)
     
-    y_min, y_max = ax.get_ylim()
-    outliers[componentName] = y_min
-    kw = dict(marker='o', linestyle='none', color='r', alpha=0.3)
-    ax.plot(outliers[componentName] , label= componentName + '-outlier', **kw)
+    if outliers is not None:
+        y_min, y_max = ax.get_ylim()
+        outliers[componentName] = y_min
+        kw = dict(marker='o', linestyle='none', color='r', alpha=0.3)
+        ax.plot(outliers[componentName] , label= componentName + '-outlier', **kw)
 
     minValueIndex = dataFrame[componentName].idxmin() 
     maxValueIndex = dataFrame[componentName].idxmax()
@@ -60,6 +66,75 @@ def daily_graph(dataFrame, componentName, outliers):
     ax.text(dataFrame.loc[maxValueIndex]['Date_Time'], yAxisMiddle, 'Max value', rotation=90, ha='left', va='center')
 
     plt.xlabel('Time (hours)')
+    plt.xticks( rotation= 90 )
+    plt.ylabel(componentName + ' Component (nT)')
+    plt.legend()
+    plt.show()
+
+def monthly_graph(dataFrame, componentName, outliers=None):
+
+    if dataFrame.empty:
+        print('No data is available to plot')
+        return
+
+    print('Monthly graph is being generated.')
+    #from astroplan import Observer
+    #import astropy.units as u
+    #from astropy.time import Time
+    import pytz
+    import datetime
+    import matplotlib.dates as mdates
+
+    dayDateTimeObj = dataFrame['Date_Time'][0] # just get one of elements from 'Date_Time' list. Will be used to for certian calculations
+    localTZ = dayDateTimeObj.tzinfo
+
+    fig, ax = plt.subplots()
+    ax.plot(dataFrame['Date_Time'], dataFrame[componentName], label= componentName + ' Comp')
+    days = mdates.DayLocator(interval = 1)
+    h_fmt = mdates.DateFormatter('%Y-%m-%d', localTZ)
+    ax.xaxis.set_major_locator(days)
+    ax.xaxis.set_major_formatter(h_fmt)
+    
+    if outliers is not None:
+        y_min, y_max = ax.get_ylim()
+        outliers[componentName] = y_min
+        kw = dict(marker='o', linestyle='none', color='r', alpha=0.3)
+        ax.plot(outliers[componentName] , label= componentName + '-outlier', **kw)
+
+    plt.xlabel('Time (days)')
+    plt.xticks( rotation= 90 )
+    plt.ylabel(componentName + ' Component (nT)')
+    plt.legend()
+    plt.show()
+
+def yearly_graph(dataFrame, componentName, outliers=None):
+
+    if dataFrame.empty:
+        print('No data is available to plot')
+        return
+
+    print('Yearly graph is being generated.')
+    import pytz
+    import datetime
+    import matplotlib.dates as mdates
+
+    dayDateTimeObj = dataFrame['Date_Time'][0] # just get one of elements from 'Date_Time' list. Will be used to for certian calculations
+    localTZ = dayDateTimeObj.tzinfo
+
+    fig, ax = plt.subplots()
+    ax.plot(dataFrame['Date_Time'], dataFrame[componentName], label= componentName + ' Comp')
+    days = mdates.WeekdayLocator(interval = 1)
+    h_fmt = mdates.DateFormatter('%Y-%m-%d', localTZ)
+    ax.xaxis.set_major_locator(days)
+    ax.xaxis.set_major_formatter(h_fmt)
+    
+    if outliers is not None:
+        y_min, y_max = ax.get_ylim()
+        outliers[componentName] = y_min
+        kw = dict(marker='o', linestyle='none', color='r', alpha=0.3)
+        ax.plot(outliers[componentName] , label= componentName + '-outlier', **kw)
+
+    plt.xlabel('Time (days)')
     plt.xticks( rotation= 90 )
     plt.ylabel(componentName + ' Component (nT)')
     plt.legend()

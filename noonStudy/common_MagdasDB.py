@@ -3,8 +3,10 @@ import common_DBread as dbRead
 import pytz
 from datetime import datetime
 
-def getMinData(stationCode, year, month, day, targetTimeZone=pytz.UTC):
-    targetDay = targetTimeZone.localize(datetime(int(year), int(month), int(day)))
+def getMinData(stationCode, year, month=None, day=None, targetTimeZone=pytz.UTC):
+
+    import calendar as calendar
+
     targetFileList = dbUtils.getExpectedFileNameList(stationData, stationCode, 'Min', year=year, month=month, day=day, targetTimeZone=targetTimeZone)
     dataFrame = dbRead.getData(targetFileList)
     if targetTimeZone == pytz.UTC :
@@ -22,9 +24,23 @@ def getMinData(stationCode, year, month, day, targetTimeZone=pytz.UTC):
         if timeZoneOffset[0]=='+':
             # Timezone is a UTC+ timezone. All data of previous day is already appended in 'dataFrame' list. 
             # Data before day start time (00:00 time of requested day) and data after day end time (00:00 time of requested day) 
-            # should be truncated to select data only within local-midnight to local-midnight            
-            dataFrame = dbUtils.truncateAdditionalData(dataFrame, targetDay.replace(hour=0,minute=0), targetDay.replace(hour=23,minute=59))
+            # should be truncated to select data only within local-midnight to local-midnight 
+            if month is not None and day is not None:
+                dayStartTime = targetTimeZone.localize(datetime(int(year), int(month), int(day))).replace(hour=0,minute=0)
+                dayEndTime = targetTimeZone.localize(datetime(int(year), int(month), int(day))).replace(hour=23,minute=59)
+                dataFrame = dbUtils.truncateAdditionalData(dataFrame, dayStartTime, dayEndTime)
+            elif month is not None:
+                daysCountForMonth = calendar.monthrange(int(year), int(month))[1]
+                monthStartTime = targetTimeZone.localize(datetime(int(year), int(month), 1)).replace(hour=0,minute=0)
+                monthEndTime = targetTimeZone.localize(datetime(int(year), int(month), daysCountForMonth)).replace(hour=23,minute=59)
+                dataFrame = dbUtils.truncateAdditionalData(dataFrame, monthStartTime, monthEndTime)
+            else:
+                lastDayOfDecember = calendar.monthrange(int(year), 12)[1]
+                yearStartTime = targetTimeZone.localize(datetime(int(year), 1, 1)).replace(hour=0,minute=0)
+                yearEndTime = targetTimeZone.localize(datetime(int(year), 12, lastDayOfDecember)).replace(hour=23,minute=59)  
+                dataFrame = dbUtils.truncateAdditionalData(dataFrame, yearStartTime, yearEndTime)                
             return dataFrame
+            
         elif timeZoneOffset[0]=='-':
             # Timezone is a UTC- timezone. All data of next day is already appended in 'dataFrame' list. 
             # Data before day start time (00:00 time of requested day) and data after day end time (00:00 time of requested day) 
