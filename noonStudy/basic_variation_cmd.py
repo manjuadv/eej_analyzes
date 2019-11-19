@@ -48,10 +48,17 @@ def plotYear(year, component="H") :
     print('Plotting year : ' + year + ', component : ' + component)
     dataFrame = magdasDB.getMinData('CMB', year, targetTimeZone=pytz.timezone('Asia/Colombo'))
 
-    outliers_by_abnormal = processor.get_outliers_abnormal_ignore(dataFrame, component,min=40000, max=45000)
-    outliers_by_slope = processor.get_outliers_abnormal_slope_ignore(dataFrame, component,min=40000, max=45000)
-    outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
-    outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
+    # outliers_by_abnormal = processor.get_outliers_abnormal_ignore(dataFrame, component,min=40000, max=45000)
+    # outliers_by_slope = processor.get_outliers_abnormal_slope_ignore(dataFrame, component,min=40000, max=45000)
+    # outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
+    # outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
+    
+    ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40000, max=45000)
+    ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=100)
+    z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
+    filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc, z_score=z_score)
+    outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+
     dataFrame.loc[outliers.index, component] = np.nan
 
     plotter.yearly_graph(dataFrame, component, outliers=outliers)
@@ -68,10 +75,17 @@ def plotMonth(year, month, component="H") :
     print('Plotting month : ' + year + '-' + month + ', component : ' + component)
     dataFrame = magdasDB.getMinData('CMB', year, month, targetTimeZone=pytz.timezone('Asia/Colombo'))
 
-    outliers_by_abnormal = processor.get_outliers_abnormal_ignore(dataFrame, component,min=40000, max=45000)
-    outliers_by_slope = processor.get_outliers_abnormal_slope_ignore(dataFrame, component,min=40000, max=45000)
-    outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
-    outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
+    # outliers_by_abnormal = processor.get_outliers_abnormal_ignore(dataFrame, component,min=40000, max=45000)
+    # outliers_by_slope = processor.get_outliers_abnormal_slope_ignore(dataFrame, component,min=40000, max=45000)
+    # outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
+    # outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
+    
+    ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40000, max=45000)
+    ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=100)
+    z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
+    filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc, z_score=z_score)
+    outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+
     dataFrame.loc[outliers.index, component] = np.nan
 
     plotter.monthly_graph(dataFrame, component, outliers)
@@ -87,13 +101,16 @@ def plotDay(year, month, day, component="H") :
 
     print('Plotting day : ' + year + '-' + month + '-' + day + ', component : ' + component)
     dataFrame = magdasDB.getMinData('CMB', year, month, day, targetTimeZone=pytz.timezone('Asia/Colombo'))
-    #outliers = processor.get_outliers_rolling_medians(dataFrame, component, threshold=1.5)
-    # dataFrame.loc[outliers.index, component] = np.nan # any value can be assigned
-    # plotter.daily_graph(dataFrame, component, outliers)
-    outliers_by_abnormal = processor.get_outliers_abnormal_ignore(dataFrame, component,min=40000, max=45000)
-    outliers_by_slope = processor.get_outliers_abnormal_slope_ignore(dataFrame, component,min=40000, max=45000)
-    outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
-    outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
+    #outliers_by_abnormal = processor.get_outliers_abnormal_ignore(dataFrame, component,min=40000, max=45000)
+    #outliers_by_slope = processor.get_outliers_abnormal_slope_ignore(dataFrame, component,min=40000, max=45000)
+    #outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
+    #outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
+
+    ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40000, max=45000)
+    ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=100)
+    z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
+    filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc, z_score=z_score)
+    outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
     #print(outliers)
     dataFrame.loc[outliers.index, component] = np.nan
     plotter.daily_graph(dataFrame, component, outliers)

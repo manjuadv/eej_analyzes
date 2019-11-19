@@ -1,4 +1,79 @@
 import numpy as np
+import enum
+
+class FilterType(enum.Enum):
+    ABNORMAL_IGNORE_BY_MIN_MAX = 'Abnormal ignore by min max'
+    ABNORMAL_IGNORE_BY_SUDDEN_INCREASE = 'Abnormal ignore by sudden increase'
+    Z_SCORE = 'Z-score'
+    NORMAL_DISTRIBUTION = 'Normal distribution'
+    QAUANTILE = 'quantile'
+    ROLLING_MEDIANS = 'Rolling Medians'
+
+
+class OutlierFilter():
+    def __init__(self, filter_type, **kwargs):
+        self.__dict__.update(kwargs)
+        self.filter_type = filter_type
+
+class FilterList():
+    def __init__(self, ab_ignore_min_max=None, ab_ignore_sudden_inc=None, 
+    z_score=None, normal_disb=None, quantile=None, rolling_medians=None):
+        self.ab_ignore_min_max = ab_ignore_min_max
+        self.ab_ignore_sudden_inc = ab_ignore_sudden_inc
+        self.z_score = z_score
+        self.normal_disb = normal_disb
+        self.quantile = quantile
+        self.rolling_medians = rolling_medians
+
+def get_outliers_multiple_filter(data_frame, component, filter_list):
+    import pandas as pd
+    from scipy import stats
+
+    print('Started : get_outliers_multiple_filter')
+
+    if filter_list.z_score is not None:
+        print('Z-score calculation started.')
+        data_frame[component + '_z'] = np.abs(stats.zscore(data_frame[component]))
+        print('Z-score calculation done.')
+    if filter_list.normal_disb is not None:
+        mean = data_frame[component].mean()
+        std = data_frame[component].std()
+    if filter_list.quantile is not None:
+        q1 = data_frame[component].quantile(0.25)
+        q3 = data_frame[component].quantile(0.75)
+        iqr = q3-q1 #Interquartile range
+        fence_low  = q1 - filter_list.quantile.interquartile_range_scale*iqr
+        fence_high = q3 + filter_list.quantile.interquartile_range_scale*iqr
+    if filter_list.rolling_medians is not None:
+        from pandas import rolling_median
+        data_frame['r_median'] = rolling_median(data_frame[component], window=3, center=True).fillna(method='bfill').fillna(method='ffill')
+        data_frame['r_median_diff'] = np.abs(data_frame[component] - data_frame['r_median'])
+
+    index_list_to_drop = []
+    for index, row in data_frame.iterrows():
+        if filter_list.ab_ignore_min_max is not None:
+            if row[component]< filter_list.ab_ignore_min_max.min or row[component]> filter_list.ab_ignore_min_max.max:
+                index_list_to_drop.append(index)
+        if filter_list.ab_ignore_sudden_inc is not None:
+            int_index = data_frame.index.get_loc(index)
+            if int_index > 1 and abs(data_frame.iloc[int_index][component] - data_frame.iloc[int_index - 1][component]) > filter_list.ab_ignore_sudden_inc.threshold:
+                index_list_to_drop.append(index)
+        if filter_list.z_score is not None:
+            if row[component + '_z'] > filter_list.z_score.threshold:
+                index_list_to_drop.append(index)
+        if filter_list.normal_disb is not None:
+            if (row[component] < (mean - filter_list.normal_disb.SD_range_scalar * std)) or (row[component] > (mean + filter_list.normal_disb.SD_range_scalar * std)):
+                index_list_to_drop.append(index)
+        if filter_list.quantile is not None:
+            if (row[component] < fence_low) or (row[component] > fence_high):
+                index_list_to_drop.append(index)
+        if filter_list.rolling_medians is not None:
+            if row['r_median_diff'] > filter_list.rolling_medians.threshold:         
+                index_list_to_drop.append(index)
+            
+    result = data_frame.loc[index_list_to_drop]
+    print('Done : get_outliers_multiple_filter')
+    return result
 
 def get_outliers_min_max_limit(df_in, col_name, min=0, max = 100000):
     print('Started : get_outliers_min_max_limit')
@@ -59,6 +134,7 @@ def get_outliers_z_score(dataFrame, component, threshold = 3):
     print('Started : get_outliers_z_score')
 
     dataFrame[component + '_z'] = np.abs(stats.zscore(dataFrame[component]))
+    #print(dataFrame)
     df_out = dataFrame.loc[(dataFrame[component + '_z'] > threshold)]
     print('Done : get_outliers_z_score')
     return df_out
