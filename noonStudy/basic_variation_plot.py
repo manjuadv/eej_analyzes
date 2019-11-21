@@ -11,6 +11,7 @@ def daily_graph(dataFrame, componentName, outliers=None):
     from astropy.time import Time
     import pytz
     import datetime
+    import helper_astro as astro
     import matplotlib.dates as mdates
 
     dayDateTimeObj = dataFrame['Date_Time'][0] # just get one of elements from 'Date_Time' list. Will be used to for certian calculations
@@ -42,8 +43,14 @@ def daily_graph(dataFrame, componentName, outliers=None):
         kw = dict(marker='o', linestyle='none', color='r', alpha=0.3)
         ax.plot(outliers[componentName] , label= componentName + '-outlier', **kw)
 
+    moon_phase = astro.moon_get_moon_phase(dataFrame['Date_Time'][0])
+    t = ax.text(0.03, 0.9,'Lunar phase {:3.0f}%'.format(moon_phase * 100), horizontalalignment='left'
+    , verticalalignment='center',transform=ax.transAxes)
+    t.set_bbox(dict(facecolor='red', alpha=0.5, edgecolor='red'))
+
     minValueIndex = dataFrame[componentName].idxmin() 
     maxValueIndex = dataFrame[componentName].idxmax()
+
     print('Max value : ' + str(dataFrame.loc[maxValueIndex][componentName]) + ', at : '
     + dataFrame.loc[maxValueIndex]['Date_Time'].strftime('%Y-%m-%d %H:%M:%S %z'))
     print('Min value : ' + str(dataFrame.loc[minValueIndex][componentName]) + ', at : '
@@ -84,6 +91,8 @@ def monthly_graph(dataFrame, componentName, outliers=None):
     import pytz
     import datetime
     import matplotlib.dates as mdates
+    import helper_astro as astro
+    from datetime import datetime
 
     dayDateTimeObj = dataFrame['Date_Time'][0] # just get one of elements from 'Date_Time' list. Will be used to for certian calculations
     localTZ = dayDateTimeObj.tzinfo
@@ -95,11 +104,24 @@ def monthly_graph(dataFrame, componentName, outliers=None):
     ax.xaxis.set_major_locator(days)
     ax.xaxis.set_major_formatter(h_fmt)
     
+    y_min, y_max = ax.get_ylim()
+    
     if outliers is not None:
-        y_min, y_max = ax.get_ylim()
         outliers[componentName] = y_min
         kw = dict(marker='o', linestyle='none', color='r', alpha=0.3)
         ax.plot(outliers[componentName] , label= componentName + '-outlier', **kw)
+
+
+    start_date = datetime(year=dataFrame['Date_Time'][0].year, month=dataFrame['Date_Time'][0].month, day=dataFrame['Date_Time'][0].day, tzinfo=localTZ)
+    end_date_obj = dataFrame['Date_Time'][len(dataFrame['Date_Time']) - 1]
+    end_date = datetime(year=end_date_obj.year, month=end_date_obj.month, day=end_date_obj.day, tzinfo=localTZ)
+    moon_phases = astro.moon_get_moon_phase_range(start_date, end_date)
+    moon_phases_data = []
+    for index, row in dataFrame.iterrows():
+        day_offset_from_start_date = (row['Date_Time'] - start_date).days
+        phase = y_min + moon_phases[day_offset_from_start_date] * ((y_max - y_min) / 4)
+        moon_phases_data.append(phase)
+    ax.plot(dataFrame['Date_Time'], moon_phases_data, label= 'Moon phase')
 
     plt.xlabel('Time (days)')
     plt.xticks( rotation= 90 )
