@@ -36,7 +36,9 @@ def processArgvs(argvs):
             #outliers = processor.get_outliers_min_max_limit(dataFrame, component, 40000, 40955)
             #outliers = processor.get_outliers_z_score(dataFrame, component, threshold=3)
             #outliers = processor.get_outliers_rolling_medians(dataFrame, component, threshold=1.5)
-            outliers = processor.get_outliers_normal_distribution(dataFrame, component, SD_range_scalar=3)
+            normal_distribution_filter = processor.OutlierFilter(processor.FilterType.NORMAL_DISTRIBUTION, SD_range_scalar=3)
+            filter_list =  processor.FilterList(normal_disb=normal_distribution_filter)
+            outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
             dataFrame.loc[outliers.index, component] = np.nan # any value can be assigned
 
             import noon_study_plot as plotter
