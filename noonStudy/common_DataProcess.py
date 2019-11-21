@@ -82,6 +82,28 @@ def get_outliers_multiple_filter(data_frame, component, filter_list):
     print('Done : get_outliers_multiple_filter')
     return result
 
+def save_outliers(station_code, outliers_df):
+
+    import common_file as file_acces
+    if outliers_df.empty:
+        print('No data set is empty')
+        return
+    elif len(outliers_df)<1:
+        print('No data set is empty')
+        return
+
+    file_acces.write_outliers_to_file(station_code, outliers_df)
+
+def get_outliers_from_file(station_code, min_or_sec='Min'):
+
+    import common_file as file_access
+
+    outliers = file_access.read_confirmed_outliers(station_code, min_or_sec)
+
+    return outliers
+
+
+
 # def get_outliers_min_max_limit(df_in, col_name, min=0, max = 100000):
 #     print('Started : get_outliers_min_max_limit')
 #     df_out = df_in.loc[(df_in[col_name] < min) | (df_in[col_name] > max)]
