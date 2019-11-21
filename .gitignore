@@ -20,6 +20,7 @@ prop_app/adimages/
 frontEnd/assets/images/Downloaded icon collection (NOT USED)/
 prop_app/assets/images/Downloaded icon collection (NOT USED)/
 noonStudy/__pycache__
+noonStudy/Data_Files
 
 # Coverage directory used by tools like istanbul
 coverage
