@@ -32,6 +32,8 @@ def daily_graph(dataFrame, componentName, outliers=None):
 
     fig, ax = plt.subplots()
     ax.plot(dataFrame['Date_Time'], dataFrame[componentName], label= componentName + ' Comp')
+    if componentName=='D':
+        ax.axhline(y=0, c='purple')
     hours = mdates.HourLocator(interval = 1)
     h_fmt = mdates.DateFormatter('%d %H:%M:%S', localTZ)
     ax.xaxis.set_major_locator(hours)

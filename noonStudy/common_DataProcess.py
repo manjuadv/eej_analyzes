@@ -55,6 +55,7 @@ def get_outliers_multiple_filter(data_frame, component, filter_list):
 
     index_list_to_drop = []
     for index, row in data_frame.iterrows():
+        #print(row)
         if filter_list.ab_ignore_min_max is not None:
             if row[component]< filter_list.ab_ignore_min_max.min or row[component]> filter_list.ab_ignore_min_max.max:
                 index_list_to_drop.append(index)

@@ -32,13 +32,38 @@ def processArgvs(argvs):
             print('Collecting data for day ' + year + '-' + month + '-' + day)
 
             dataFrame = magdasDB.getMinData('CMB', year, month, day, targetTimeZone=pytz.timezone('Asia/Colombo'))
+
+            if (dataFrame.index == '2017-09-07 03:26:00 +0000').any():
+                dataFrame.loc['2017-09-07 03:26:00 +0000', component] = np.nan
+            if (dataFrame.index == '2017-09-07 03:27:00 +0000').any():
+                dataFrame.loc['2017-09-07 03:27:00 +0000', component] = np.nan
+            if (dataFrame.index == '2017-09-09 03:57:00 +0000').any():
+                dataFrame.loc['2017-09-09 03:57:00 +0000', component] = np.nan
+            if (dataFrame.index == '2017-09-09 03:58:00 +0000').any():
+                dataFrame.loc['2017-09-09 03:58:00 +0000', component] = np.nan
+            if (dataFrame.index == '2017-09-09 12:13:00 +0000').any():
+                dataFrame.loc['2017-09-09 12:13:00 +0000', component] = np.nan
+            if (dataFrame.index == '2017-09-09 13:08:00 +0000').any():
+                dataFrame.loc['2017-09-09 13:08:00 +0000', component] = np.nan
+            
+            #print(dataFrame.loc['2017-09-07 18:09:00 +0000'])
+            #print(dataFrame[dataFrame.apply(lambda x: (not (np.isreal(x[component]))), axis=1)])
+            #print(dataFrame[dataFrame.apply(lambda x: (not (np.isreal(x['F']))), axis=1)])
+            #print(dataFrame['F'].isnull())
             #outliers = processor.get_outliers_quantile_scale(dataFrame, component, interquartile_range_scale=1.5)
             #outliers = processor.get_outliers_min_max_limit(dataFrame, component, 40000, 40955)
             #outliers = processor.get_outliers_z_score(dataFrame, component, threshold=3)
             #outliers = processor.get_outliers_rolling_medians(dataFrame, component, threshold=1.5)
-            normal_distribution_filter = processor.OutlierFilter(processor.FilterType.NORMAL_DISTRIBUTION, SD_range_scalar=3)
-            filter_list =  processor.FilterList(normal_disb=normal_distribution_filter)
+            # normal_distribution_filter = processor.OutlierFilter(processor.FilterType.NORMAL_DISTRIBUTION, SD_range_scalar=3)
+            # filter_list =  processor.FilterList(normal_disb=normal_distribution_filter)
+            # outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+
+            import pandas as pd
+            unreal_total_field_filter = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
+            ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40700, max=45000)
+            filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter)
             outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+            
             dataFrame.loc[outliers.index, component] = np.nan # any value can be assigned
 
             import noon_study_plot as plotter
@@ -48,11 +73,23 @@ def processArgvs(argvs):
             #plotter.dialyCompMaxAndNoon(dataFrame['Date_Time'],dataFrame['H'],'H')
 
         else :
+
+            import numpy as np
+            import common_DataProcess as processor
+            import noon_study_plot as plotter
+            
             year = parts[0]
             month = parts[1]
             if len(month) < 2:
                 month = '0' + month
             print('Collecting data for month ' + year + '-' + month)
+
+            dataFrame = magdasDB.getMinData('CMB', year, month, targetTimeZone=pytz.timezone('Asia/Colombo'))
+            unreal_total_field = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
+            z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
+            filter_list =  processor.FilterList(unreal_total_field=unreal_total_field, z_score=z_score)
+            outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+            plotter.montly_peak_noon_gap_variatoin(dataFrame, component, outliers)
 
     elif len(argvs[0]) == 4 and is_number(argvs[0]):
         year = argvs[0]
