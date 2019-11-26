@@ -71,14 +71,11 @@ def plotYear(year, component="H") :
     # outliers_by_slope = processor.get_outliers_abnormal_slope_ignore(dataFrame, component,min=40000, max=45000)
     # outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
     # outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
-    
-    ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40000, max=45000)
-    #ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=100)
-    z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
-    filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, z_score=z_score)
-    outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
 
-    dataFrame.loc[outliers.index, component] = np.nan
+
+    outliers = processor.get_outliers_confirmed_from_file('CMB')
+
+    #dataFrame.loc[outliers.index, component] = np.nan
 
     plotter.yearly_graph(dataFrame, component, outliers=outliers)
     
@@ -139,7 +136,10 @@ def plotDay(year, month, day, component="H") :
         unreal_total_field = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
         filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc, z_score=z_score, unreal_total_field=unreal_total_field)
         #filter_list =  processor.FilterList(unreal_total_field=unreal_total_field)
-        outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+        #outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+        outliers = processor.get_outliers_confirmed_from_file('CMB')
+        outliers = outliers.loc[(outliers.index > dataFrame.index.values[0]) & (outliers.index < dataFrame.index.values[-1])]
+        print(outliers)
         #print(dataFrame.loc[(dataFrame['Date_Time'] > datetime(year=2016,month=3, day=31, hour=11, minute=30, tzinfo=pytz.timezone('Asia/Colombo')))])
         #print(dataFrame.loc[(math.isnan(dataFrame['F']))])
         dataFrame.loc[outliers.index, component] = np.nan

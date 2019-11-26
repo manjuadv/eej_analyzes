@@ -1,8 +1,8 @@
 def main():
     #basicStructureOneFigure()
     #basicStructureOneFigureWithSubPlot()
-    #basicStructureTwoPlots()
-    basicStructureTwoGraphs()
+    basicStructureTwoPlots()
+    #basicStructureTwoGraphs()
     #basicStructureOfFigures()
     #basicStructureOfFigures2()
     #basicStructureOfFigures3()

@@ -82,6 +82,11 @@ def get_outliers_multiple_filter(data_frame, component, filter_list):
     result = data_frame.loc[index_list_to_drop]
     print('Done : get_outliers_multiple_filter')
     return result
+def get_outliers_unreal_total_field(data_frame, min=-70000, max=70000):
+    print('Started : get_outliers_min_max_limit')
+    df_out = data_frame.loc[(data_frame['F'] < min) | (data_frame['F'] > max)]
+    print('Done : get_outliers_min_max_limit')
+    return df_out
 
 def save_outliers(station_code, outliers_df):
 
@@ -95,7 +100,7 @@ def save_outliers(station_code, outliers_df):
 
     file_acces.write_outliers_to_file(station_code, outliers_df)
 
-def get_outliers_from_file(station_code, min_or_sec='Min'):
+def get_outliers_confirmed_from_file(station_code, min_or_sec='Min'):
 
     import common_file as file_access
 
@@ -103,6 +108,13 @@ def get_outliers_from_file(station_code, min_or_sec='Min'):
 
     return outliers
 
+def get_outliers_from_specific_file(file_relative_path):
+
+    import common_file as file_access
+
+    outliers = file_access.read_outliers_from_file(file_relative_path)
+
+    return outliers
 
 
 # def get_outliers_min_max_limit(df_in, col_name, min=0, max = 100000):
