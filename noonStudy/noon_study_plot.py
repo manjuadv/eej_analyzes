@@ -191,23 +191,25 @@ def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers):
     axs[0].xaxis.set_major_formatter(h_fmt)
 
     date_max_values = get_max_of_day(data_frame,comp_name)
+    print(date_max_values)
 
     for day, day_data_row in date_max_values.iterrows():
-        print('Max time of day ' + day.strftime('%Y-%m-%d %H:%M:%S %z') + ' ' + day_data_row['Max_Time'].strftime('%Y-%m-%d %H:%M:%S %z')
-        + ' value : ' + str(day_data_row['Max_Value']))
+        # print('Max time of day ' + day.strftime('%Y-%m-%d %H:%M:%S %z') + ' ' + day_data_row['Max_Time'].strftime('%Y-%m-%d %H:%M:%S %z')
+        # + ' value : ' + str(day_data_row['Max_Value']))
         sunRiseTimeLocal = subaru.sun_rise_time(Time(day), which="previous").to_datetime(localTZ)
-        print('Sun rise time (local time zone) : ' + sunRiseTimeLocal.strftime('%Y-%m-%d %H:%M:%S %z'))
+        # print('Sun rise time (local time zone) : ' + sunRiseTimeLocal.strftime('%Y-%m-%d %H:%M:%S %z'))
         
-        sunRiseTimeRow = data_frame.loc[(data_frame['Date_Time'] == sunRiseTimeLocal.replace(second=0, microsecond=0))]
-        sunRiseTimeRow = data_frame.loc[(data_frame['Date_Time'] == sunRiseTimeLocal.replace(second=0, microsecond=0))]
-        axs[0].axvline(x=sunRiseTimeRow['Date_Time'][0], ls='--', c='orange')
         axs[0].axvline(x=day_data_row['Max_Time'], ls='--', c='green')
 
-        date_max_values.loc[day, 'Peak_Height'] = day_data_row['Max_Value'] - sunRiseTimeRow[comp_name][0]
-
-        date_max_values.loc[day, 'Peak_distance'] = (day_data_row['Max_Time'] - sunRiseTimeRow['Date_Time'][0]).total_seconds()/60
-        
-        print('Sun-rise to peak time diff in minutes (HH:MM) : {0:3.0f}, peak height {1:4.0f}'.format(date_max_values.loc[day, 'Peak_distance'], date_max_values.loc[day, 'Peak_Height']))
+        sunRiseTimeRow = data_frame.loc[(data_frame['Date_Time'] == sunRiseTimeLocal.replace(second=0, microsecond=0))]
+        if sunRiseTimeRow.empty:
+            print('Sunrise time data is not available for the date {0}'.format(sunRiseTimeLocal.strftime('%Y-%m-%d %z')))
+        else:
+            axs[0].axvline(x=sunRiseTimeRow['Date_Time'][0], ls='--', c='orange')
+            print(day_data_row)
+            date_max_values.loc[day, 'Peak_Height'] = day_data_row['Max_Value'] - sunRiseTimeRow[comp_name][0]      
+            date_max_values.loc[day, 'Peak_distance'] = (day_data_row['Max_Time'] - sunRiseTimeRow['Date_Time'][0]).total_seconds()/60
+            # print('Sun-rise to peak time diff in minutes (HH:MM) : {0:3.0f}, peak height {1:4.0f}'.format(date_max_values.loc[day, 'Peak_distance'], date_max_values.loc[day, 'Peak_Height']))
 
     print(date_max_values)
 
@@ -226,6 +228,7 @@ def get_max_of_day(data_frame, component):
 
     import numpy as np
     import pandas as pd
+    import math
 
     dataSet = {'Max_Time' : [], 'Max_Value' : []}
     day_list = []
@@ -241,9 +244,13 @@ def get_max_of_day(data_frame, component):
             day_list = np.append(day_list, pd.to_datetime(row['Date_Time'], format='%Y-%m-%d %H:%M:%S').replace(hour=12, minute=0))
             dataSet['Max_Value'] = np.append(dataSet['Max_Value'], row[component])
             dataSet['Max_Time'] = np.append(dataSet['Max_Time'], current_date)
-            max = row[component]
+            
+            if row[component] is not pd.NaT:
+                max = row[component]
+            else:
+                max = -9999999
 
-        if row[component] > max:
+        if row[component] is not pd.NaT and row[component] > max:
             dataSet['Max_Value'][-1] = row[component]
             dataSet['Max_Time'][-1] = row['Date_Time']
             max = row[component]

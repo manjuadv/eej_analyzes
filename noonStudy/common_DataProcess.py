@@ -1,5 +1,6 @@
 import numpy as np
 import enum
+import pytz
 
 class FilterType(enum.Enum):
     ABNORMAL_IGNORE_BY_MIN_MAX = 'Abnormal ignore by min max'
@@ -60,7 +61,7 @@ def get_outliers_multiple_filter(data_frame, component, filter_list):
             if row[component]< filter_list.ab_ignore_min_max.min or row[component]> filter_list.ab_ignore_min_max.max:
                 index_list_to_drop.append(index)
         if filter_list.unreal_total_field is not None:
-            if math.isnan(row['F']) or row['F'] < filter_list.unreal_total_field.total_field_min or row['F']> filter_list.unreal_total_field.total_field_max:
+            if (row['F'] is pd.NaT) or (math.isnan(row['F'])) or row['F'] < filter_list.unreal_total_field.total_field_min or row['F']> filter_list.unreal_total_field.total_field_max:
                 index_list_to_drop.append(index)
         if filter_list.ab_ignore_sudden_inc is not None:
             int_index = data_frame.index.get_loc(index)
@@ -100,6 +101,34 @@ def save_outliers(station_code, outliers_df):
 
     file_acces.write_outliers_to_file(station_code, outliers_df)
 
+def save_manual_outliers(station_code, time, end_time_in_range=None,targetTimeZone=pytz.UTC, comp_name=None):
+    import common_MagdasDB  as magdasDB
+    import common_DataProcess as processor
+    import common_file as file_acces
+    import datetime as datetime
+
+    try:
+        time = datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
+        time =  targetTimeZone.localize(time)
+        if end_time_in_range is not None:
+            end_time_in_range = datetime.datetime.strptime(end_time_in_range, '%Y-%m-%d %H:%M:%S')
+            end_time_in_range = targetTimeZone.localize(end_time_in_range)
+    except Exception as e:
+        raise Exception('Time format is in correct. Expcected format : (%Y-%m-%d %H:%M:%S).' + e)
+
+    dataFrame = magdasDB.getMinData('CMB', str(time.year), str(time.month), str(time.day), targetTimeZone)
+
+    if end_time_in_range is None:
+        # single value        
+        outliers = dataFrame.loc[(dataFrame['Date_Time'] == time)] 
+    elif time.date() == end_time_in_range.date():
+        outliers = dataFrame.loc[(dataFrame['Date_Time'] >= time) & (dataFrame['Date_Time'] <= end_time_in_range)]
+    else:
+        raise Exception('Time range should be in the same day (according to UTC time)')
+
+    #print(outliers)
+    file_acces.write_manual_outliers_to_file(station_code, outliers, comp_name=comp_name)
+
 def get_outliers_confirmed_from_file(station_code, min_or_sec='Min'):
 
     import common_file as file_access
@@ -107,6 +136,14 @@ def get_outliers_confirmed_from_file(station_code, min_or_sec='Min'):
     outliers = file_access.read_confirmed_outliers(station_code, min_or_sec)
 
     return outliers
+
+def get_outliers_confirmed_in_range(station_code, min_or_sec='Min', utc_start_time=None, utc_end_time=None):
+
+    import common_file as file_access
+
+    print('Collecting.... anual and confirmed outliers')
+    outliers = get_outliers_confirmed_from_file(station_code, min_or_sec)
+    return outliers.loc[(outliers.index >= utc_start_time) & (outliers.index <= utc_end_time)]
 
 def get_outliers_from_specific_file(file_relative_path):
 

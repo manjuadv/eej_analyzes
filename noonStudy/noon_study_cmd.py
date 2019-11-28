@@ -52,12 +52,15 @@ def monthly_noon_peak_analyze(year, month, component):
     print('Collecting data for month ' + year + '-' + month)
 
     dataFrame = magdasDB.getMinData('CMB', year, month, targetTimeZone=pytz.timezone('Asia/Colombo'))
-    unreal_total_field = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
-    z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
-    filter_list =  processor.FilterList(unreal_total_field=unreal_total_field, z_score=z_score)
-    outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+    
+    # unreal_total_field = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
+    # z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
+    # filter_list =  processor.FilterList(unreal_total_field=unreal_total_field, z_score=z_score)
+    # outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
 
-    dataFrame.loc[outliers.index, ['H','D','Z','F']] = np.nan
+    # dataFrame.loc[outliers.index, ['H','D','Z','F']] = np.nan
+    outliers = processor.get_outliers_confirmed_in_range('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
+    dataFrame.loc[dataFrame.index.isin(outliers.index), ['H','D','Z','F']] = np.nan
 
     #plotter.montly_peak_noon_height_variatoin(dataFrame, component, outliers)
     plotter.montly_sun_rise_peak_variatoin(dataFrame, component, outliers)
@@ -97,13 +100,15 @@ def daily_noon_analyze(year, month, day, component):
     # filter_list =  processor.FilterList(normal_disb=normal_distribution_filter)
     # outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
 
-    import pandas as pd
-    unreal_total_field_filter = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
-    ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40700, max=45000)
-    filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter)
-    outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+    # import pandas as pd
+    # unreal_total_field_filter = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
+    # ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40700, max=45000)
+    # filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter)
+    # outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
 
-    dataFrame.loc[outliers.index, component] = np.nan # any value can be assigned
+    outliers = processor.get_outliers_confirmed_in_range('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
+
+    dataFrame.loc[dataFrame.index.isin(outliers.index), component] = np.nan # any value can be assigned
 
     import noon_study_plot as plotter
     plotter.dailyVariationAnalyzes(dataFrame, component, outliers)

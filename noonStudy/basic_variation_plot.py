@@ -78,6 +78,7 @@ def daily_graph(dataFrame, componentName, outliers=None):
     plt.xticks( rotation= 90 )
     plt.ylabel(componentName + ' Component (nT)')
     plt.legend()
+    plt.title('Daily variation : Component ' + componentName + ' - ' + noonTimeLocal.strftime('%Y %B %d'))
     plt.show()
 
 def monthly_graph(dataFrame, componentName, outliers=None):
@@ -103,8 +104,12 @@ def monthly_graph(dataFrame, componentName, outliers=None):
     ax.plot(dataFrame['Date_Time'], dataFrame[componentName], label= componentName + ' Comp')
     days = mdates.DayLocator(interval = 1)
     h_fmt = mdates.DateFormatter('%Y-%m-%d', localTZ)
+    hours = mdates.HourLocator(interval = 4)
     ax.xaxis.set_major_locator(days)
     ax.xaxis.set_major_formatter(h_fmt)
+    ax.xaxis.set_minor_locator(hours)
+    #from matplotlib import ticker
+    #ax.xaxis.set_minor_formatter(ticker.FuncFormatter(ticks_format))
     
     y_min, y_max = ax.get_ylim()
     
@@ -129,8 +134,12 @@ def monthly_graph(dataFrame, componentName, outliers=None):
     plt.xticks( rotation= 90 )
     plt.ylabel(componentName + ' Component (nT)')
     plt.legend()
+    plt.title('Monthly variation : Component ' + componentName + ' - ' + dayDateTimeObj.strftime('%Y %B'))
     plt.show()
 
+def ticks_format(value, index):
+    import matplotlib.dates as mdates
+    return (mdates.num2date(value).strftime('%H'))
 def yearly_graph(dataFrame, componentName, outliers=None):
 
     if dataFrame.empty:
@@ -162,6 +171,7 @@ def yearly_graph(dataFrame, componentName, outliers=None):
     plt.xticks( rotation= 90 )
     plt.ylabel(componentName + ' Component (nT)')
     plt.legend()
+    plt.title('Yearly variation : Component ' + componentName + ' - ' + dayDateTimeObj.strftime('%Y'))
     plt.show()
 
 def getMinMaxIndex(valueSet):

@@ -33,6 +33,7 @@ def getData(fileList):
     # If the data is converted to local time zone, 'Date_Time' column will have the local time (still index is in UTC)
     dataFrame = pd.DataFrame(data=dataSet, index=dataSet['Date_Time'], columns=['Date_Time','H','D','Z','F'])
     dataFrame = fillMissingEntries(dataFrame)
+    dataFrame.sort_index(inplace=True)
     return dataFrame
 
 def fillMissingEntries(dataFrame):

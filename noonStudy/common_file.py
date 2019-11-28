@@ -2,16 +2,31 @@
 line_format = '{0}\t{1}\t{2:6.2f}\t{3:6.2f}\t{4:6.2f}\t{5:6.2f}' # 0-UTC_Time 1-Date_Time 2-H 3-D 4-Z 5-F
 write_file_format = '{0}_{1}_Generated.txt' # StationCode_MIN_Generated.txt. eg:CMB_Min_Generated.txt
 default_read_file_format = '{0}_{1}_Confirmed.txt' # StationCode_MIN_Confirmed.txt. eg:CMB_Min_Confirmed.txt
+manual_outlier_file_format = '{0}_{1}_Manual_Removed.txt' # StationCode_MIN_Manual_Removed.txt. eg:CMB_Min_Manual_Removed.txt
+manual_outlier_confirmed_file_format = '{0}_{1}_Manual_Removed.txt' #'{0}_{1}_Manual_Confirmed.txt'
 header = 'UTC_Time'.rjust(25) + '\t' + 'Date_Time'.rjust(25) + '\t' + 'H'.rjust(8) + '\t' + 'D'.rjust(7) + '\t' + 'Z'.rjust(7) + '\t' + 'F'.rjust(7)
 base_path = './/Data_Files//Outliers//'
 
 def write_outliers_to_file(station_code, outliers, min_or_sec='Min'):
     import os
-    from datetime import datetime
 
     write_file = write_file_format.format(station_code, min_or_sec)
     relative_path = os.path.relpath( base_path + write_file, '.') 
     marked_outliers = mark_as_outlier(outliers.copy(deep=True))
+
+    save_to_file(relative_path, marked_outliers, station_code, min_or_sec)
+
+def write_manual_outliers_to_file(station_code, outliers, min_or_sec='Min', comp_name = None):
+    import os
+
+    write_file = manual_outlier_file_format.format(station_code, min_or_sec)
+    relative_path = os.path.relpath( base_path + write_file, '.')
+    marked_outliers = mark_as_outlier(outliers.copy(deep=True), comp_name = comp_name)
+
+    save_to_file(relative_path, marked_outliers, station_code, min_or_sec)
+
+def save_to_file(relative_path, marked_outliers, station_code, min_or_sec):
+    import os
 
     if os.path.exists(relative_path): 
         existing_outliers = read_outliers_from_file(relative_path)
@@ -23,10 +38,10 @@ def write_outliers_to_file(station_code, outliers, min_or_sec='Min'):
 def mark_as_outlier(outliers, comp_name = None):
     if comp_name is None:
         # mark all columns as outlires (as True)
-        outliers.loc[outliers.index, 'H'] = True
-        outliers.loc[outliers.index, 'D'] = True
-        outliers.loc[outliers.index, 'Z'] = True
-        outliers.loc[outliers.index, 'F'] = True
+        outliers['H'] = True
+        outliers['D'] = True
+        outliers['Z'] = True
+        outliers['F'] = True
         return outliers
     else:
         # mark only the given column as outliers (as True)
@@ -67,13 +82,26 @@ def write_df_to_file(relative_path, station_code, df, min_or_sec='Min'):
 def read_confirmed_outliers(station_code, min_or_sec='Min', comp_name=None):        
     import os
 
-    read_file = default_read_file_format.format(station_code, min_or_sec)
-    relative_path = os.path.relpath( './'+ base_path + read_file, '.')
-    return read_outliers_from_file(relative_path, comp_name)
+    confirmed_file = default_read_file_format.format(station_code, min_or_sec)
+    relative_path_confirmed_file = os.path.relpath( './'+ base_path + confirmed_file, '.')
+    confirmded_file_outliers = read_outliers_from_file(relative_path_confirmed_file, comp_name)
+
+    manual_file = manual_outlier_confirmed_file_format.format(station_code, min_or_sec)
+    relative_path_manual_file = os.path.relpath( './'+ base_path + manual_file, '.')
+    manual_removed_outliers = read_outliers_from_file(relative_path_manual_file, comp_name)
+
+    to_appended = manual_removed_outliers.loc[~manual_removed_outliers.index.isin(confirmded_file_outliers.index)]
+    confirmed_and_manual_outliers = confirmded_file_outliers.append(to_appended)
+
+    return confirmed_and_manual_outliers
 
 def read_outliers_from_file(relative_path, comp_name = None):
     import pandas as pd
+    import os
 
+    if not os.path.exists(relative_path): 
+        print('Error : File not exists. [' + relative_path + ']')
+        return pd.DataFrame()
     print('Reading outliers from file : ' + relative_path)
     #outliers_df = pd.read_csv(relative_path, sep='\t', index_col=0, names=['Local_Time','H','D','Z','F'], header=1)
     outliers_df = pd.read_csv(relative_path, sep='\t', index_col=0, names=['Date_Time','H','D','Z','F'], header=0, parse_dates=[0]

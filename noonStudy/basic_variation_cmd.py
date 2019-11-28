@@ -73,9 +73,10 @@ def plotYear(year, component="H") :
     # outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
 
 
-    outliers = processor.get_outliers_confirmed_from_file('CMB')
+    outliers = processor.get_outliers_confirmed_in_range('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
 
     #dataFrame.loc[outliers.index, component] = np.nan
+    dataFrame.loc[dataFrame.index.isin(outliers.index), component] = np.nan
 
     plotter.yearly_graph(dataFrame, component, outliers=outliers)
     
@@ -96,17 +97,18 @@ def plotMonth(year, month, component="H") :
     # outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
     # outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
     
-    ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40000, max=45000)
-    ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=100)
-    unreal_total_field = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
-    z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
+    # ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40000, max=45000)
+    # ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=100)
+    # unreal_total_field = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
+    # z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
     # filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc, z_score=z_score)
     # outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
 
-    filter_list =  processor.FilterList(unreal_total_field=unreal_total_field, z_score=z_score)
-    outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
-
-    dataFrame.loc[outliers.index, component] = np.nan
+    # filter_list =  processor.FilterList(unreal_total_field=unreal_total_field, z_score=z_score)
+    # outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+    
+    outliers = processor.get_outliers_confirmed_in_range('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
+    dataFrame.loc[dataFrame.index.isin(outliers.index), component] = np.nan
 
     plotter.monthly_graph(dataFrame, component, outliers)
     #plotter.monthly_graph(dataFrame, component)
@@ -130,36 +132,42 @@ def plotDay(year, month, day, component="H") :
     #outliers_zscore = processor.get_outliers_z_score(dataFrame, component, threshold=3)
     #outliers = pd.concat([outliers_by_abnormal, outliers_by_slope, outliers_zscore])
     if component=='H' or component=='F':
-        ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40000, max=45000)
-        ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=100)
-        z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
-        unreal_total_field = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
-        filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc, z_score=z_score, unreal_total_field=unreal_total_field)
+        # ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=40000, max=45000)
+        # ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=100)
+        # z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
+        # unreal_total_field = processor.OutlierFilter(processor.FilterType.UNREAL_TOTAL_FIELD, total_field_min=40000, total_field_max=43000)
+        # filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc, z_score=z_score, unreal_total_field=unreal_total_field)
         #filter_list =  processor.FilterList(unreal_total_field=unreal_total_field)
         #outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
-        outliers = processor.get_outliers_confirmed_from_file('CMB')
-        outliers = outliers.loc[(outliers.index > dataFrame.index.values[0]) & (outliers.index < dataFrame.index.values[-1])]
-        print(outliers)
+        outliers = processor.get_outliers_confirmed_in_range('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
+        #outliers = outliers.loc[(outliers.index > dataFrame.index.values[0]) & (outliers.index < dataFrame.index.values[-1])]
         #print(dataFrame.loc[(dataFrame['Date_Time'] > datetime(year=2016,month=3, day=31, hour=11, minute=30, tzinfo=pytz.timezone('Asia/Colombo')))])
         #print(dataFrame.loc[(math.isnan(dataFrame['F']))])
-        dataFrame.loc[outliers.index, component] = np.nan
+        #dataFrame.loc[outliers.index, component] = np.nan
+        dataFrame.loc[dataFrame.index.isin(outliers.index), component] = np.nan
         plotter.daily_graph(dataFrame, component, outliers)
     elif component=='D':
-        ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=-10000, max=45000)
-        ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=10)
-        z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
-        filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc, z_score=z_score)
-        outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
-        dataFrame.loc[outliers.index, component] = np.nan
+        # ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=-10000, max=45000)
+        # ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=10)
+        # z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
+        # filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc, z_score=z_score)
+        # outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+        outliers = processor.get_outliers_confirmed_in_range('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
+
+        #dataFrame.loc[outliers.index, component] = np.nan
+        dataFrame.loc[dataFrame.index.isin(outliers.index), component] = np.nan
         plotter.daily_graph(dataFrame, component, outliers)
         #plotter.daily_graph(dataFrame, component)
     elif component=='Z':
-        ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=-10000, max=45000)
-        ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=100)
+        #ab_ignore_min_max_filter = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_MIN_MAX, min=-10000, max=45000)
+        #ab_ignore_sudden_inc = processor.OutlierFilter(processor.FilterType.ABNORMAL_IGNORE_BY_SUDDEN_INCREASE, threshold=100)
         #z_score = processor.OutlierFilter(processor.FilterType.Z_SCORE, threshold=3)
-        filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc)
-        outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
-        dataFrame.loc[outliers.index, component] = np.nan
+        #filter_list =  processor.FilterList(ab_ignore_min_max=ab_ignore_min_max_filter, ab_ignore_sudden_inc=ab_ignore_sudden_inc)
+        #outliers = processor.get_outliers_multiple_filter(dataFrame, component, filter_list)
+        outliers = processor.get_outliers_confirmed_in_range('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
+
+        #dataFrame.loc[outliers.index, component] = np.nan
+        dataFrame.loc[dataFrame.index.isin(outliers.index), component] = np.nan
         plotter.daily_graph(dataFrame, component, outliers)
     #plotter.generate_guassian_fit_curve_for_data(dataFrame, component)
     
