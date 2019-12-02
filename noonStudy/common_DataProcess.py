@@ -139,8 +139,6 @@ def get_outliers_confirmed_from_file(station_code, min_or_sec='Min'):
 
 def get_outliers_confirmed_in_range(station_code, min_or_sec='Min', utc_start_time=None, utc_end_time=None):
 
-    import common_file as file_access
-
     print('Collecting.... anual and confirmed outliers')
     outliers = get_outliers_confirmed_from_file(station_code, min_or_sec)
     return outliers.loc[(outliers.index >= utc_start_time) & (outliers.index <= utc_end_time)]
@@ -152,6 +150,17 @@ def get_outliers_from_specific_file(file_relative_path):
     outliers = file_access.read_outliers_from_file(file_relative_path)
 
     return outliers
+
+def read_dst_data_in_range(utc_start_time, utc_end_time):
+    import pandas as pd
+    
+    if pd.to_datetime(utc_start_time).year != pd.to_datetime(utc_end_time).year:
+        print('This code is desinged to read Dst file in an year. Bit more coding needed to read from different years')
+    else:
+        import common_file as file_access
+        dst_data = file_access.read_dst_data(pd.to_datetime(utc_start_time).year)
+        return dst_data.loc[(dst_data.index >= utc_start_time) & (dst_data.index <= utc_end_time)]
+
 
 
 # def get_outliers_min_max_limit(df_in, col_name, min=0, max = 100000):

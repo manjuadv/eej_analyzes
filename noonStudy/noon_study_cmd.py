@@ -38,9 +38,28 @@ def processArgvs(argvs):
 
     elif len(argvs[0]) == 4 and is_number(argvs[0]):
         year = argvs[0]
-        print('Collecting data for year ' + year)
+        component  = 'H'
+        yearly_noon_peak_analyze(year, component)
     else:
         print('Incorrect combination of parameters. First paramter supposed to be a date.')
+
+def yearly_noon_peak_analyze(year, component):
+    
+    import numpy as np
+    import common_DataProcess as processor
+    import noon_study_plot as plotter
+    import common_MagdasDB as magdasDB
+            
+    print('Collecting data for year ' + year )
+
+    dataFrame = magdasDB.getMinData('CMB', year, targetTimeZone=pytz.timezone('Asia/Colombo'))
+    
+    outliers = processor.get_outliers_confirmed_in_range('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
+    dataFrame.loc[dataFrame.index.isin(outliers.index), ['H','D','Z','F']] = np.nan
+
+    dst_data = processor.read_dst_data_in_range(dataFrame.index.values[0], dataFrame.index.values[-1])
+
+    plotter.yearly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data)
 
 def monthly_noon_peak_analyze(year, month, component):
     
@@ -62,8 +81,11 @@ def monthly_noon_peak_analyze(year, month, component):
     outliers = processor.get_outliers_confirmed_in_range('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
     dataFrame.loc[dataFrame.index.isin(outliers.index), ['H','D','Z','F']] = np.nan
 
-    #plotter.montly_peak_noon_height_variatoin(dataFrame, component, outliers)
-    plotter.montly_sun_rise_peak_variatoin(dataFrame, component, outliers)
+    dst_data = processor.read_dst_data_in_range(dataFrame.index.values[0], dataFrame.index.values[-1])
+    #print(dst_data)
+
+    plotter.montly_peak_noon_height_variatoin(dataFrame, component, outliers, dst_data)
+    #plotter.montly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data)
 
 def daily_noon_analyze(year, month, day, component):
     

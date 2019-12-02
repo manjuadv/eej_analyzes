@@ -34,6 +34,7 @@ def getData(fileList):
     dataFrame = pd.DataFrame(data=dataSet, index=dataSet['Date_Time'], columns=['Date_Time','H','D','Z','F'])
     dataFrame = fillMissingEntries(dataFrame)
     dataFrame.sort_index(inplace=True)
+    dataFrame.drop_duplicates(inplace=True,keep='first')
     return dataFrame
 
 def fillMissingEntries(dataFrame):

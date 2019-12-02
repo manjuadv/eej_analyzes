@@ -52,6 +52,7 @@ def daily_graph(dataFrame, componentName, outliers=None):
 
     minValueIndex = dataFrame[componentName].idxmin() 
     maxValueIndex = dataFrame[componentName].idxmax()
+    #print(dataFrame.loc[maxValueIndex])
 
     print('Max value : ' + str(dataFrame.loc[maxValueIndex][componentName]) + ', at : '
     + dataFrame.loc[maxValueIndex]['Date_Time'].strftime('%Y-%m-%d %H:%M:%S %z'))
@@ -62,9 +63,11 @@ def daily_graph(dataFrame, componentName, outliers=None):
     - dataFrame.loc[minValueIndex][componentName]) / 2)
 
     noonTimeRow = dataFrame[(dataFrame['Date_Time'] == noonTimeLocal.replace(second=0, microsecond=0))]
-    print('Noon time value of ' + componentName + '-Component {:6.3f}'.format(noonTimeRow[componentName][0]))
-    ax.axvline(x=noonTimeRow['Date_Time'][0], ls='--', c='orange')
-    ax.text(noonTimeRow['Date_Time'][0], yAxisMiddle, 'Local noon', rotation=90, ha='left', va='center')
+    if not noonTimeRow.empty:
+        print('Noon time value of ' + componentName + '-Component {:6.3f}'.format(noonTimeRow[componentName][0]))
+        ax.axvline(x=noonTimeRow['Date_Time'][0], ls='--', c='orange')
+        ax.text(noonTimeRow['Date_Time'][0], yAxisMiddle, 'Local noon', rotation=90, ha='left', va='center')
+    
     ax.axvline(x=sunRiseTimeLocal, ls='--', c='gray')
     ax.axvline(x=sunRiseTimeLocalTwilight, ls='--', c='gray')
     ax.text(sunRiseTimeLocal, dataFrame.loc[minValueIndex][componentName], 'Sun rise', rotation=90, ha='left', va='bottom')
@@ -142,14 +145,16 @@ def ticks_format(value, index):
     return (mdates.num2date(value).strftime('%H'))
 def yearly_graph(dataFrame, componentName, outliers=None):
 
+    import helper_astro as astro
+    import pytz
+    from datetime import datetime
+    import matplotlib.dates as mdates
+
     if dataFrame.empty:
         print('No data is available to plot')
         return
 
     print('Yearly graph is being generated.')
-    import pytz
-    import datetime
-    import matplotlib.dates as mdates
 
     dayDateTimeObj = dataFrame['Date_Time'][0] # just get one of elements from 'Date_Time' list. Will be used to for certian calculations
     localTZ = dayDateTimeObj.tzinfo
@@ -166,6 +171,19 @@ def yearly_graph(dataFrame, componentName, outliers=None):
         outliers[componentName] = y_min
         kw = dict(marker='o', linestyle='none', color='r', alpha=0.3)
         ax.plot(outliers[componentName] , label= componentName + '-outlier', **kw)
+
+    start_date = datetime(year=dataFrame['Date_Time'][0].year, month=dataFrame['Date_Time'][0].month, day=dataFrame['Date_Time'][0].day, tzinfo=localTZ)
+    end_date_obj = dataFrame['Date_Time'][- 1]
+    end_date = datetime(year=end_date_obj.year, month=end_date_obj.month, day=end_date_obj.day, tzinfo=localTZ)
+    moon_phases = astro.moon_get_moon_phase_range_data_frame(start_date, end_date)
+    # print(moon_phases)
+    # moon_phases_data = []
+    # for index, row in dataFrame.iterrows():
+    #     day_offset_from_start_date = (row['Date_Time'] - start_date).days
+    #     phase = y_min + (moon_phases[day_offset_from_start_date] * ((y_max - y_min) / 4))
+    #     moon_phases_data.append(phase)
+    moon_phases['Plot_val'] = y_min + (moon_phases['Phase'] * ((y_max - y_min) / 4))
+    ax.plot(moon_phases.index.values, moon_phases['Plot_val'], label= 'Moon phase')
 
     plt.xlabel('Time (days)')
     plt.xticks( rotation= 90 )

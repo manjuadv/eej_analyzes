@@ -112,6 +112,24 @@ def read_outliers_from_file(relative_path, comp_name = None):
     else:
         return outliers_df.loc[outliers_df[comp_name]==True]
 
+def read_dst_data(year):
+    import pandas as pd
+    import os
+
+    dst_year_file = 'Dst_{0}.txt'.format(year)
+    relative_path = os.path.relpath( './'+ './/Data_Files//Dst//' + dst_year_file, '.')
+
+    if not os.path.exists(relative_path): 
+        print('Error : File not exists. [' + relative_path + ']')
+        return pd.DataFrame()
+    print('Reading Dst data from file : ' + relative_path)
+    #outliers_df = pd.read_csv(relative_path, sep='\t', index_col=0, names=['Local_Time','H','D','Z','F'], header=1)
+    dst_data = pd.read_csv(relative_path, sep='\t', index_col=0, names=['Local_Time','Dst'], header=0, parse_dates=[0]
+    ,date_parser=dateparse)
+    dst_data.sort_index(inplace=True)
+    return dst_data
+
+
 def dateparse (datetime_str):  
     import datetime
     return datetime.datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S %z')

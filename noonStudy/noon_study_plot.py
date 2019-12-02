@@ -49,6 +49,9 @@ def dailyVariationAnalyzes(dataFrame, componentName, outliers):
     - dataFrame.loc[minValueIndex][componentName]) / 2)
 
     noonTimeRow = dataFrame[(dataFrame['Date_Time'] == noonTimeLocal.replace(second=0, microsecond=0))]
+    if noonTimeRow.empty:
+        print('Error : Noon time data not available')
+        return
     print('Noon time value of ' + componentName + '-Component {:6.3f}'.format(noonTimeRow[componentName][0]))
     ax.axvline(x=noonTimeRow['Date_Time'][0], ls='--', c='orange')
     ax.text(noonTimeRow['Date_Time'][0], yAxisMiddle, 'Local noon', rotation=90, ha='left', va='center')
@@ -107,7 +110,7 @@ def dailyVariationAnalyzes(dataFrame, componentName, outliers):
     plt.legend()
     plt.show()
 
-def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers):
+def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data):
 
     from astroplan import Observer
     import astropy.units as u
@@ -117,6 +120,7 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers):
     import pandas as pd
     import matplotlib.dates as mdates
     import numpy as np
+    import helper_astro as astro
 
     localTZ = data_frame['Date_Time'][0].tzinfo
     subaru = Observer(longitude=80.07*u.deg, latitude=6.97*u.deg, elevation=0*u.m, name="Subaru", timezone=localTZ)
@@ -131,24 +135,26 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers):
     h_fmt = mdates.DateFormatter('%Y-%m-%d', localTZ)
     axs[0].xaxis.set_major_locator(days)
     axs[0].xaxis.set_major_formatter(h_fmt)
+    y_min, y_max = axs[0].get_ylim()
 
     date_max_values = get_max_of_day(data_frame,comp_name)
 
     for day, day_data_row in date_max_values.iterrows():
-        print('Max time of day ' + day.strftime('%Y-%m-%d %H:%M:%S %z') + ' ' + day_data_row['Max_Time'].strftime('%Y-%m-%d %H:%M:%S %z')
-        + ' value : ' + str(day_data_row['Max_Value']))
+        #print('Max time of day ' + day.strftime('%Y-%m-%d %H:%M:%S %z') + ' ' + day_data_row['Max_Time'].strftime('%Y-%m-%d %H:%M:%S %z')
+        #+ ' value : ' + str(day_data_row['Max_Value']))
         noonTimeLocal = subaru.noon(Time(day), which='next').to_datetime(localTZ)
         print('Local noon time (local time zone) : ' + noonTimeLocal.strftime('%Y-%m-%d %H:%M:%S %z'))
 
         noonTimeRow = data_frame.loc[(data_frame['Date_Time'] == noonTimeLocal.replace(second=0, microsecond=0))]
-        axs[0].axvline(x=noonTimeRow['Date_Time'][0], ls='--', c='orange')
-        axs[0].axvline(x=day_data_row['Max_Time'], ls='--', c='green')
 
-        date_max_values.loc[day, 'Peak_Height'] = day_data_row['Max_Value'] - noonTimeRow[comp_name][0]
-
-        date_max_values.loc[day, 'Peak_distance'] = (noonTimeRow['Date_Time'][0] - day_data_row['Max_Time']).total_seconds()/60
-        
-        print('Noon and peak time diff in minutes (HH:MM) : {:3.0f}'.format(date_max_values.loc[day, 'Peak_distance']))
+        if noonTimeRow.empty:
+            print('Sunrise time data is not available for the date {0}'.format(noonTimeLocal.strftime('%Y-%m-%d %z')))
+        else:
+            axs[0].axvline(x=noonTimeRow['Date_Time'][0], ls='--', c='orange')
+            axs[0].axvline(x=day_data_row['Max_Time'], ls='--', c='green')
+            date_max_values.loc[day, 'Peak_Height'] = day_data_row['Max_Value'] - noonTimeRow[comp_name][0]
+            date_max_values.loc[day, 'Peak_distance'] = (noonTimeRow['Date_Time'][0] - day_data_row['Max_Time']).total_seconds()/60
+            print('Noon and peak time diff in minutes (HH:MM) : {:3.0f}'.format(date_max_values.loc[day, 'Peak_distance']))
     
     print(date_max_values)
 
@@ -162,12 +168,24 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers):
     axs[2].plot(date_max_values['Peak_distance'], label= comp_name + ' peak-noon distance(mins)')
     axs[2].set_ylabel(comp_name + ' peak distance (mins)')
 
+    if dst_data is not None:
+        dst_data.loc[(dst_data['Dst']>-40), 'Dst'] = np.nan
+        c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), dst_data['Dst'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
+        fig.colorbar(c_graph, ax=axs)
+
+    start_date = datetime(year=data_frame['Date_Time'][0].year, month=data_frame['Date_Time'][0].month, day=data_frame['Date_Time'][0].day, tzinfo=localTZ)
+    end_date_obj = data_frame['Date_Time'][- 1]
+    end_date = datetime(year=end_date_obj.year, month=end_date_obj.month, day=end_date_obj.day, tzinfo=localTZ)
+    moon_phases = astro.moon_get_moon_phase_range_data_frame(start_date, end_date)
+    moon_phases['Plot_val'] = y_min + (moon_phases['Phase'] * ((y_max - y_min) / 4))
+    axs[0].plot(moon_phases.index.values, moon_phases['Plot_val'], label= 'Moon phase')
+    
     plt.xlabel('Time (days)')
     plt.xticks( rotation= 90 )
     plt.legend()
     plt.show()
 
-def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers):
+def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=None):
     
     from astroplan import Observer
     import astropy.units as u
@@ -219,10 +237,75 @@ def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers):
     axs[2].plot(date_max_values['Peak_distance'], label= comp_name + ' sunrise-peak distance(mins)')
     axs[2].set_ylabel(comp_name + ' peak distance (mins)')
 
+    if dst_data is not None:
+        dst_data.loc[(dst_data['Dst']>-40), 'Dst'] = np.nan
+        c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), dst_data['Dst'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
+        fig.colorbar(c_graph, ax=axs)
+
     plt.xlabel('Time (days)')
     plt.xticks( rotation= 90 )
     plt.legend()
     plt.show()
+
+def yearly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=None):
+    
+    from astroplan import Observer
+    import astropy.units as u
+    from astropy.time import Time
+    import pytz
+    from datetime import timedelta, date, datetime
+    import pandas as pd
+    import matplotlib.dates as mdates
+    import numpy as np
+
+
+    dayDateTimeObj = data_frame['Date_Time'][0]
+    localTZ = dayDateTimeObj.tzinfo
+    subaru = Observer(longitude=80.07*u.deg, latitude=6.97*u.deg, elevation=0*u.m, name="Subaru", timezone=localTZ)
+
+    fig, axs = plt.subplots(3, 1, sharex=True)
+    fig.subplots_adjust(hspace=0)
+    axs[0].plot(data_frame['Date_Time'], data_frame[comp_name], label= comp_name + ' Comp')
+    axs[0].set_ylabel(comp_name + ' Component (nT)')
+    days = mdates.WeekdayLocator(interval = 1)
+    h_fmt = mdates.DateFormatter('%Y-%m-%d', localTZ)
+    axs[0].xaxis.set_major_locator(days)
+    axs[0].xaxis.set_major_formatter(h_fmt)
+
+    date_max_values = get_max_of_day(data_frame,comp_name)
+
+    for day, day_data_row in date_max_values.iterrows():
+        sunRiseTimeLocal = subaru.sun_rise_time(Time(day), which="previous").to_datetime(localTZ)
+
+        #axs[0].axvline(x=day_data_row['Max_Time'], ls='--', c='green')
+
+        sunRiseTimeRow = data_frame.loc[(data_frame['Date_Time'] == sunRiseTimeLocal.replace(second=0, microsecond=0))]
+        if sunRiseTimeRow.empty:
+            print('Sunrise time data is not available for the date {0}'.format(sunRiseTimeLocal.strftime('%Y-%m-%d %z')))
+        else:
+            #axs[0].axvline(x=sunRiseTimeRow['Date_Time'][0], ls='--', c='orange')
+            date_max_values.loc[day, 'Peak_Height'] = day_data_row['Max_Value'] - sunRiseTimeRow[comp_name][0]      
+            date_max_values.loc[day, 'Peak_distance'] = (day_data_row['Max_Time'] - sunRiseTimeRow['Date_Time'][0]).total_seconds()/60
+
+    print(date_max_values)
+
+    axs[1].plot(date_max_values['Peak_Height'], label= comp_name + ' sunrise-peak height')
+    axs[1].set_ylabel(comp_name + ' magnitude (nT)')
+
+    axs[2].plot(date_max_values['Peak_distance'], label= comp_name + ' sunrise-peak distance(mins)')
+    axs[2].set_ylabel(comp_name + ' peak distance (mins)')
+
+    if dst_data is not None:
+        dst_data.loc[(dst_data['Dst']>-40), 'Dst'] = np.nan
+        c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), dst_data['Dst'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
+        fig.colorbar(c_graph, ax=axs)
+
+    plt.xlabel('Time (days)')
+    plt.xticks( rotation= 90 )
+    plt.ylabel(comp_name + ' Component (nT)')
+    plt.legend()
+    plt.title('Yearly noon peak variation analyzes : Component ' + comp_name + ' - ' + dayDateTimeObj.strftime('%Y'))
+    plt.show() 
 
 def get_max_of_day(data_frame, component):
 
@@ -254,8 +337,8 @@ def get_max_of_day(data_frame, component):
             dataSet['Max_Value'][-1] = row[component]
             dataSet['Max_Time'][-1] = row['Date_Time']
             max = row[component]
-    month_data = pd.DataFrame(data=dataSet, index=day_list, columns=['Max_Time','Max_Value'])
-    return month_data
+    max_data = pd.DataFrame(data=dataSet, index=day_list, columns=['Max_Time','Max_Value'])
+    return max_data
 
 def daterange(start_date, end_date):
     from datetime import timedelta
