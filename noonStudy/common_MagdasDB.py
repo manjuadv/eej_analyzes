@@ -48,6 +48,13 @@ def getMinData(stationCode, year, month=None, day=None, targetTimeZone=pytz.UTC)
             dataFrame = dbUtils.truncateAdditionalData(dataFrame, targetDay.replace(hour=0,minute=0), targetDay.replace(hour=23,minute=59))
             return dataFrame
 
+def getEEIndex(stationCode=None, year=None, targetTimeZone=pytz.UTC):
+    targetFileList = dbUtils.getEEIndexFileNameList(stationDataEEIndex, stationCode, 'Min', year=year, targetTimeZone=targetTimeZone)
+    print(targetFileList)
+    data_frame = dbRead.getEEIndex(targetFileList)
+
+    return data_frame
+
 def getSecData(stationCode, year, month, day, targetTimeZone=pytz.UTC):
     targetFileList = dbUtils.getExpectedFileNameList(stationData, stationCode, 'Min', year=year, month=month, day=day, targetTimeZone=targetTimeZone)
     dataFrame = dbRead.getData(targetFileList)
@@ -59,4 +66,6 @@ def printStationList():
 # For any station to be used with this python program, it should be listed below with the path to the base folder of station's file list
 stationData = {'CMB' : 'C:\\Data\\Study\\Post Grad\\MAGDAS\\MAGDAS data\\CMB_MAGDAS_IAGA_1s_1m\\CMB',
 'DAV' : 'C:\\Data\\Study\\Post Grad\\MAGDAS\\MAGDAS data\\DAV_MAGDAS_IAGA_1s_1m\\DAV'}
+stationDataEEIndex = {'CMB' : 'C:\\Data\\Study\\Post Grad\\MAGDAS\\MAGDAS data\\EE-index_Data\\CMB',
+'DAV' : 'C:\\Data\\Study\\Post Grad\\MAGDAS\\MAGDAS data\\EE-index_Data\\DAV'}
 minOrSecDB = 'Min' # 'Sec' (For one second resolution DB)

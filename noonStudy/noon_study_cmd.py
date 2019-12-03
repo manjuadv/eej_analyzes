@@ -49,6 +49,7 @@ def yearly_noon_peak_analyze(year, component):
     import common_DataProcess as processor
     import noon_study_plot as plotter
     import common_MagdasDB as magdasDB
+    import helper_bad_data as bad_data
             
     print('Collecting data for year ' + year )
 
@@ -59,7 +60,8 @@ def yearly_noon_peak_analyze(year, component):
 
     dst_data = processor.read_dst_data_in_range(dataFrame.index.values[0], dataFrame.index.values[-1])
 
-    plotter.yearly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data)
+    bad_data_days = bad_data.get_sun_rise_noon_peak_bad_data_days('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
+    plotter.yearly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days)
 
 def monthly_noon_peak_analyze(year, month, component):
     
@@ -67,6 +69,7 @@ def monthly_noon_peak_analyze(year, month, component):
     import common_DataProcess as processor
     import noon_study_plot as plotter
     import common_MagdasDB as magdasDB
+    import helper_bad_data as bad_data
             
     print('Collecting data for month ' + year + '-' + month)
 
@@ -84,8 +87,9 @@ def monthly_noon_peak_analyze(year, month, component):
     dst_data = processor.read_dst_data_in_range(dataFrame.index.values[0], dataFrame.index.values[-1])
     #print(dst_data)
 
-    plotter.montly_peak_noon_height_variatoin(dataFrame, component, outliers, dst_data)
-    #plotter.montly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data)
+    bad_data_days = bad_data.get_sun_rise_noon_peak_bad_data_days('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
+    #plotter.montly_peak_noon_height_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days)    
+    plotter.montly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days)
 
 def daily_noon_analyze(year, month, day, component):
     

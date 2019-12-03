@@ -5,7 +5,8 @@ print('Procedure should be specified in this file.')
 #command = 'generate_outliers'
 #command = 'check_written_outliers'
 #command = 'outliers_generation_verify'
-command = 'generate_manual_remove_file'
+#command = 'generate_manual_remove_file'
+command = 'read_ee_index_data'
 
 if command == 'generate_outliers':
 
@@ -77,3 +78,9 @@ if command == 'generate_manual_remove_file':
     # Removing of month 2016-12 outlier values.    
     processor.save_manual_outliers('CMB', '2016-12-01 06:26:00')
     processor.save_manual_outliers('CMB', '2016-12-01 12:02:00', '2016-12-01 12:04:00', targetTimeZone=pytz.timezone('Asia/Colombo'))
+
+if command=='read_ee_index_data':
+    import common_MagdasDB as magdasDB
+    import pytz as pytz
+
+    df_ee_index = magdasDB.getEEIndex('CMB',year='2016', targetTimeZone=pytz.timezone('Asia/Colombo'))
