@@ -40,12 +40,23 @@ def moon_get_moon_phase_range_data_frame(start_date, end_date):
     jd = np.arange(jd, jd + no_of_days+1,1)
     mp = pyasl.moonphase(jd)
 
-    dataSet = {'Day' : [], 'Phase' : []}
+    dataSet = {'Day' : [], 'Phase' : [], 'Peak' : []}
 
+    #previousHeighestValue = 0
+    #previoutLowestValue = 1
     for d_offset, phase in enumerate(mp):
         day = (start_date + timedelta(days=d_offset)).replace(hour=12)
         dataSet['Day'] = np.append(dataSet['Day'], day)
         dataSet['Phase'] = np.append(dataSet['Phase'], phase)
+        if d_offset > 0 and d_offset < (len(mp)-1):
+            if mp[d_offset-1] <= phase > mp[d_offset+1]:
+                dataSet['Peak'] = np.append(dataSet['Peak'], 'High')
+            elif mp[d_offset-1] >= phase < mp[d_offset+1]:
+                dataSet['Peak'] = np.append(dataSet['Peak'], 'Low')
+            else:
+                dataSet['Peak'] = np.append(dataSet['Peak'], None)
+        else:
+            dataSet['Peak'] = np.append(dataSet['Peak'], None)
     
-    data_frame = pd.DataFrame(data=dataSet, index=dataSet['Day'], columns=['Phase'])
+    data_frame = pd.DataFrame(data=dataSet, index=dataSet['Day'], columns=['Phase','Peak'])
     return data_frame

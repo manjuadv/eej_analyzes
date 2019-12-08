@@ -48,12 +48,18 @@ def getMinData(stationCode, year, month=None, day=None, targetTimeZone=pytz.UTC)
             dataFrame = dbUtils.truncateAdditionalData(dataFrame, targetDay.replace(hour=0,minute=0), targetDay.replace(hour=23,minute=59))
             return dataFrame
 
-def getEEIndex(stationCode=None, year=None, targetTimeZone=pytz.UTC):
-    targetFileList = dbUtils.getEEIndexFileNameList(stationDataEEIndex, stationCode, 'Min', year=year, targetTimeZone=targetTimeZone)
-    print(targetFileList)
-    data_frame = dbRead.getEEIndex(targetFileList)
+def getEEIndex(stationCode=None, year=None):
+    import numpy as np
 
-    return data_frame
+    targetFileList = dbUtils.getEEIndexFileNameList(stationDataEEIndex, stationCode, 'Min', year=year, targetTimeZone=pytz.UTC)
+    df_ee_index = dbRead.getEEIndex(targetFileList)
+
+    df_ee_index.loc[df_ee_index.EUEL>99000, ['EUEL']] = np.nan
+    df_ee_index.loc[df_ee_index.ER>99000, ['ER']] = np.nan
+    df_ee_index.loc[df_ee_index.EDst6h>99000, ['EDst6h']] = np.nan
+    df_ee_index.loc[df_ee_index.EDst1h>99000, ['EDst1h']] = np.nan
+
+    return df_ee_index
 
 def getSecData(stationCode, year, month, day, targetTimeZone=pytz.UTC):
     targetFileList = dbUtils.getExpectedFileNameList(stationData, stationCode, 'Min', year=year, month=month, day=day, targetTimeZone=targetTimeZone)

@@ -176,12 +176,6 @@ def yearly_graph(dataFrame, componentName, outliers=None):
     end_date_obj = dataFrame['Date_Time'][- 1]
     end_date = datetime(year=end_date_obj.year, month=end_date_obj.month, day=end_date_obj.day, tzinfo=localTZ)
     moon_phases = astro.moon_get_moon_phase_range_data_frame(start_date, end_date)
-    # print(moon_phases)
-    # moon_phases_data = []
-    # for index, row in dataFrame.iterrows():
-    #     day_offset_from_start_date = (row['Date_Time'] - start_date).days
-    #     phase = y_min + (moon_phases[day_offset_from_start_date] * ((y_max - y_min) / 4))
-    #     moon_phases_data.append(phase)
     moon_phases['Plot_val'] = y_min + (moon_phases['Phase'] * ((y_max - y_min) / 4))
     ax.plot(moon_phases.index.values, moon_phases['Plot_val'], label= 'Moon phase')
 

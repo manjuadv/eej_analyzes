@@ -155,13 +155,24 @@ def read_dst_data_in_range(utc_start_time, utc_end_time):
     import pandas as pd
     
     if pd.to_datetime(utc_start_time).year != pd.to_datetime(utc_end_time).year:
-        print('This code is desinged to read Dst file in an year. Bit more coding needed to read from different years')
+        raise Exception('This code is desinged to read Dst file in an year. Bit more coding needed to read from different years')
     else:
         import common_file as file_access
         dst_data = file_access.read_dst_data(pd.to_datetime(utc_start_time).year)
         return dst_data.loc[(dst_data.index >= utc_start_time) & (dst_data.index <= utc_end_time)]
 
+def get_ee_index_data_in_range(df_ee_index, utc_start_time, utc_end_time):
+    import pandas as pd
+    import common_MagdasDB as magdasDB
+    import pytz as pytz
+    import numpy as np
+    
+    df_ee_index.loc[df_ee_index.EUEL>99000, ['EUEL']] = np.nan
+    df_ee_index.loc[df_ee_index.ER>99000, ['ER']] = np.nan
+    df_ee_index.loc[df_ee_index.EDst6h>99000, ['EDst6h']] = np.nan
+    df_ee_index.loc[df_ee_index.EDst1h>99000, ['EDst1h']] = np.nan
 
+    return df_ee_index.loc[(df_ee_index.index >= utc_start_time) & (df_ee_index.index <= utc_end_time)]
 
 # def get_outliers_min_max_limit(df_in, col_name, min=0, max = 100000):
 #     print('Started : get_outliers_min_max_limit')

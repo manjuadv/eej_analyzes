@@ -110,7 +110,7 @@ def dailyVariationAnalyzes(dataFrame, componentName, outliers):
     plt.legend()
     plt.show()
 
-def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None):
+def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None, ee_index=None):
 
     from astroplan import Observer
     import astropy.units as u
@@ -126,7 +126,7 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=
     localTZ = dayDateTimeObj.tzinfo
     subaru = Observer(longitude=80.07*u.deg, latitude=6.97*u.deg, elevation=0*u.m, name="Subaru", timezone=localTZ)
 
-    fig, axs = plt.subplots(3, 1, sharex=True)
+    fig, axs = plt.subplots(4, 1, sharex=True)
     fig.subplots_adjust(hspace=0)
     axs[0].plot(data_frame['Date_Time'], data_frame[comp_name], label= comp_name + ' Comp')
     #axs[0].set_yticks(np.arange(-0.9, 1.0, 0.4))
@@ -174,6 +174,8 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=
     #date_max_values['Peak_Height'] = date_max_values['Peak_Height']
     axs[1].plot(date_max_values['Plot_Time'],date_max_values['Peak_Height'], label= comp_name + ' peak-noon height')
     axs[1].set_ylabel(comp_name + ' peak-noon (nT)')
+    date_max_values['Peak_Height_SMA_3'] = date_max_values.iloc[:,2].rolling(window=3).mean()
+    axs[1].plot(date_max_values['Plot_Time'], date_max_values['Peak_Height_SMA_3'], label= 'SMA(3)')
     y_min_axs_1, y_max_axs_1 = axs[1].get_ylim()
     #axs[1].set_yticks(np.arange(0, 500, 10))
     #axs[1].set_ylim(0, 100)
@@ -185,11 +187,17 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=
 
     axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance'], label= comp_name + ' peak-noon distance(mins)')
     axs[2].set_ylabel(comp_name + ' peak distance (mins)')
+    date_max_values['Peak_distance_SMA_3'] = date_max_values.iloc[:,3].rolling(window=3).mean()
+    axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance_SMA_3'], label= 'SMA(3)')
 
     if dst_data is not None:
         dst_data.loc[(dst_data['Dst']>-40), 'Dst'] = np.nan
         c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), dst_data['Dst'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
         fig.colorbar(c_graph, ax=axs)
+
+    if ee_index is not None:
+        axs[3].plot(ee_index.index, ee_index['EUEL'], label= 'EUEL')
+        axs[3].set_ylabel('EUEL (nT)')
 
     start_date = datetime(year=data_frame['Date_Time'][0].year, month=data_frame['Date_Time'][0].month, day=data_frame['Date_Time'][0].day, tzinfo=localTZ)
     end_date_obj = data_frame['Date_Time'][- 1]
@@ -198,13 +206,17 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=
     moon_phases['Plot_val'] = y_min + (moon_phases['Phase'] * ((y_max - y_min) / 4))
     axs[0].plot(moon_phases.index.values, moon_phases['Plot_val'], label= 'Moon phase')
     
+    axs[0].legend()
+    axs[1].legend()
+    axs[2].legend()
+    axs[3].legend()
+
     plt.xlabel('Time (days)')
     plt.xticks( rotation= 90 )
     plt.suptitle('Monthly noon peak variation analyzes : Component ' + comp_name + ' - ' + dayDateTimeObj.strftime('%Y %B'))
-    plt.legend()
     plt.show()
 
-def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None):
+def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None, ee_index=None):
     
     from astroplan import Observer
     import astropy.units as u
@@ -220,7 +232,7 @@ def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=Non
     localTZ = dayDateTimeObj.tzinfo
     subaru = Observer(longitude=80.07*u.deg, latitude=6.97*u.deg, elevation=0*u.m, name="Subaru", timezone=localTZ)
 
-    fig, axs = plt.subplots(3, 1, sharex=True)
+    fig, axs = plt.subplots(4, 1, sharex=True)
     fig.subplots_adjust(hspace=0)
     axs[0].plot(data_frame['Date_Time'], data_frame[comp_name], label= comp_name + ' Comp')
     axs[0].set_ylabel(comp_name + ' Component (nT)')
@@ -264,8 +276,10 @@ def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=Non
             for index, row in bad_data_days.iterrows():                
                 date_max_values.loc[((date_max_values.index.year == index.year) & (date_max_values.index.month == index.month) & (date_max_values.index.day == index.day)), ['Peak_Height', 'Peak_distance']] = np.nan
 
-    axs[1].plot(date_max_values['Plot_Time'], date_max_values['Peak_Height'], label= comp_name + ' sunrise-peak height')
+    axs[1].plot(date_max_values['Plot_Time'], date_max_values['Peak_Height'], label= 'sunrise-peak height')
     axs[1].set_ylabel(comp_name + ' magnitude (nT)')
+    date_max_values['Peak_Height_SMA_3'] = date_max_values.iloc[:,2].rolling(window=3).mean()
+    axs[1].plot(date_max_values['Plot_Time'], date_max_values['Peak_Height_SMA_3'], label= 'SMA(3)')
     y_min_axs_1, y_max_axs_1 = axs[1].get_ylim()
 
     if bad_data_days is not None:
@@ -273,13 +287,19 @@ def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=Non
         kw = dict(marker='o', linestyle='none', color='b', alpha=0.3)
         axs[1].plot(bad_data_days.index.values, bad_data_days['Val'] , label= comp_name + '-outlier', **kw)
 
-    axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance'], label= comp_name + ' sunrise-peak distance(mins)')
+    axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance'], label= 'sunrise-peak distance(mins)')
     axs[2].set_ylabel(comp_name + ' peak distance (mins)')
+    date_max_values['Peak_distance_SMA_3'] = date_max_values.iloc[:,3].rolling(window=3).mean()
+    axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance_SMA_3'], label= 'SMA(3)')
 
     if dst_data is not None:
         dst_data.loc[(dst_data['Dst']>-40), 'Dst'] = np.nan
         c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), dst_data['Dst'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
         fig.colorbar(c_graph, ax=axs)
+    
+    if ee_index is not None:
+        axs[3].plot(ee_index.index, ee_index['EUEL'], label= 'EUEL')
+        axs[3].set_ylabel('EUEL (nT)')
 
     start_date = datetime(year=data_frame['Date_Time'][0].year, month=data_frame['Date_Time'][0].month, day=data_frame['Date_Time'][0].day, tzinfo=localTZ)
     end_date_obj = data_frame['Date_Time'][- 1]
@@ -288,13 +308,17 @@ def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=Non
     moon_phases['Plot_val'] = y_min + (moon_phases['Phase'] * ((y_max - y_min) / 4))
     axs[0].plot(moon_phases.index.values, moon_phases['Plot_val'], label= 'Moon phase')
 
+    axs[0].legend()
+    axs[1].legend()
+    axs[2].legend()
+    axs[3].legend()
+
     plt.xlabel('Time (days)')
     plt.xticks( rotation= 90 )
     plt.suptitle('Monthly sunrise-noon variation analyzes : Component ' + comp_name + ' - ' + dayDateTimeObj.strftime('%Y %B'))
-    plt.legend()
     plt.show()
 
-def yearly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None):
+def yearly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None, ee_index=None):
     
     from astroplan import Observer
     import astropy.units as u
@@ -311,10 +335,12 @@ def yearly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=Non
     localTZ = dayDateTimeObj.tzinfo
     subaru = Observer(longitude=80.07*u.deg, latitude=6.97*u.deg, elevation=0*u.m, name="Subaru", timezone=localTZ)
 
-    fig, axs = plt.subplots(3, 1, sharex=True)
+    fig, axs = plt.subplots(4, 1, sharex=True)
     fig.subplots_adjust(hspace=0)
-    axs[0].plot(data_frame['Date_Time'], data_frame[comp_name], label= comp_name + ' Comp')
+    axs[0].plot(data_frame['Date_Time'], data_frame[comp_name], label='_nolegend_')
     axs[0].set_ylabel(comp_name + ' Component (nT)')
+    #axs[0].set_title(comp_name + ' Comp')
+    axs[0].text(0.5, 0.95, comp_name + ' Component', ha='center', va='top', transform=axs[0].transAxes)
     days = mdates.WeekdayLocator(interval = 1)
     h_fmt = mdates.DateFormatter('%Y-%m-%d', localTZ)
     axs[0].xaxis.set_major_locator(days)
@@ -324,7 +350,7 @@ def yearly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=Non
     if outliers is not None:
         outliers[comp_name] = y_min
         kw = dict(marker='o', linestyle='none', color='r', alpha=0.3)
-        axs[0].plot(outliers[comp_name] , label= comp_name + '-outlier', **kw)
+        axs[0].plot(outliers[comp_name], label='_nolegend_', **kw)
         
     date_max_values = get_max_of_day(data_frame,comp_name)
 
@@ -349,30 +375,71 @@ def yearly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=Non
             for index, row in bad_data_days.iterrows():                
                 date_max_values.loc[((date_max_values.index.year == index.year) & (date_max_values.index.month == index.month) & (date_max_values.index.day == index.day)), ['Peak_Height', 'Peak_distance']] = np.nan
 
-    axs[1].plot(date_max_values['Plot_Time'], date_max_values['Peak_Height'], label= comp_name + ' sunrise-peak height')
-    axs[1].set_ylabel(comp_name + ' magnitude (nT)')
+    axs[1].plot(date_max_values['Plot_Time'], date_max_values['Peak_Height'], label='_nolegend_')
+    axs[1].set_ylabel('(nT)')
+    #axs[1].set_title(comp_name + ' component sunrise-peak height')
+    date_max_values['Peak_Height_SMA_3'] = date_max_values.iloc[:,2].rolling(window=3).mean()
+    axs[1].plot(date_max_values['Plot_Time'], date_max_values['Peak_Height_SMA_3'], label= 'SMA(3)')
     y_min_axs_1, y_max_axs_1 = axs[1].get_ylim()
+    axs[1].text(0.5, 0.95, comp_name + ' component sunrise-peak height', ha='center', va='top', transform=axs[1].transAxes)
 
     if bad_data_days is not None:
         bad_data_days['Val'] = y_min_axs_1
         kw = dict(marker='o', linestyle='none', color='b', alpha=0.3)
-        axs[1].plot(bad_data_days.index.values, bad_data_days['Val'] , label= comp_name + '-outlier', **kw)    
+        axs[1].plot(bad_data_days.index.values, bad_data_days['Val'] , label='_nolegend_', **kw)    
 
-    axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance'], label= comp_name + ' sunrise-peak distance(mins)')
+    axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance'], label='_nolegend_')
+    y_min_axs_2, y_max_axs_2 = axs[2].get_ylim()
     axs[2].set_ylabel(comp_name + ' peak distance (mins)')
+    #axs[2].set_title(comp_name + ' component sunrise-peak distance(mins)')
+    axs[2].text(0.5, 0.95, 'Sunrise-peak distance(mins)', ha='center', va='top', transform=axs[2].transAxes)
+    date_max_values['Peak_distance_SMA_3'] = date_max_values.iloc[:,3].rolling(window=3).mean()
+    axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance_SMA_3'], label= 'SMA(3)')
 
     if dst_data is not None:
         dst_data.loc[(dst_data['Dst']>-40), 'Dst'] = np.nan
-        c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), dst_data['Dst'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
-        fig.colorbar(c_graph, ax=axs)
+        #c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), dst_data['Dst'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
+        #fig.colorbar(c_graph, ax=axs)
+
+    if ee_index is not None:
+        axs[3].plot(ee_index.index, ee_index['EUEL'], label='_nolegend_')
+        axs[3].set_ylabel('EUEL (nT)')
+        #axs[3].set_title('EUEL')
+        axs[3].text(0.5, 0.95, 'EUEL', ha='center', va='top', transform=axs[3].transAxes)
+
+
+        import matplotlib.colors
+        cmap = plt.cm.YlOrRd_r
+        eDst_lines = ee_index.loc[(ee_index['EDst1h']<=-40)]
+        norm = matplotlib.colors.Normalize(vmin=eDst_lines['EDst1h'].min(), vmax=-40)
+        kw = dict(alpha=0.3)
+        axs[0].vlines(eDst_lines.index.values, y_min, y_max, color=cmap(norm(eDst_lines['EDst1h'].values)),**kw)
+
+        #ee_index.loc[(ee_index['EDst1h']>-40), 'EDst1h'] = np.nan
+        #c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), ee_index['EDst1h'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
+        #fig.colorbar(c_graph, ax=axs)
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])  # only needed for matplotlib < 3.1
+        fig.colorbar(sm, ax=axs)
 
     start_date = datetime(year=data_frame['Date_Time'][0].year, month=data_frame['Date_Time'][0].month, day=data_frame['Date_Time'][0].day, tzinfo=localTZ)
     end_date_obj = data_frame['Date_Time'][- 1]
     end_date = datetime(year=end_date_obj.year, month=end_date_obj.month, day=end_date_obj.day, tzinfo=localTZ)
     moon_phases = astro.moon_get_moon_phase_range_data_frame(start_date, end_date)
+    #print(moon_phases)
     moon_phases['Plot_val'] = y_min + (moon_phases['Phase'] * ((y_max - y_min) / 4))
-    print(moon_phases)
     axs[0].plot(moon_phases.index.values, moon_phases['Plot_val'], label= 'Moon phase')
+
+    print(moon_phases.loc[(moon_phases['Peak']=='High') | (moon_phases['Peak']=='Low')])
+    moon_phase_peak_lines = moon_phases.loc[(moon_phases['Peak']=='High') | (moon_phases['Peak']=='Low')].index.values
+    print(moon_phase_peak_lines)
+    axs[1].vlines(moon_phase_peak_lines, y_min_axs_1, y_max_axs_1, linestyles='--', colors='gray')
+    axs[2].vlines(moon_phase_peak_lines, y_min_axs_2, y_max_axs_2, linestyles='--', colors='gray')
+
+    axs[0].legend(loc='upper right')
+    axs[1].legend(loc='upper right')
+    axs[2].legend(loc='upper right')
+    axs[3].legend(loc='upper right')
 
     plt.xlabel('Time (days)')
     plt.xticks( rotation= 90 )

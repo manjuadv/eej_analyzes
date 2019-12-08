@@ -16,7 +16,9 @@ def processArgvs(argvs):
         magdasDB.printStationList()
     elif '-' in argvs[0] :
 
-        component  = 'H'
+        component = 'H'
+        if len(argvs)>1:
+            component  = argvs[1].upper()
         parts = argvs[0].split("-")
         if len(parts) > 2:
             year = parts[0]
@@ -38,7 +40,11 @@ def processArgvs(argvs):
 
     elif len(argvs[0]) == 4 and is_number(argvs[0]):
         year = argvs[0]
-        component  = 'H'
+        
+        component = 'H'
+        if len(argvs)>1:
+            component  = argvs[1].upper()
+        
         yearly_noon_peak_analyze(year, component)
     else:
         print('Incorrect combination of parameters. First paramter supposed to be a date.')
@@ -60,8 +66,11 @@ def yearly_noon_peak_analyze(year, component):
 
     dst_data = processor.read_dst_data_in_range(dataFrame.index.values[0], dataFrame.index.values[-1])
 
+    df_ee_index = magdasDB.getEEIndex('CMB',year='2016')
+    df_ee_index = processor.get_ee_index_data_in_range(df_ee_index, dataFrame.index.values[0], dataFrame.index.values[-1])
+
     bad_data_days = bad_data.get_sun_rise_noon_peak_bad_data_days('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
-    plotter.yearly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days)
+    plotter.yearly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)
 
 def monthly_noon_peak_analyze(year, month, component):
     
@@ -88,8 +97,12 @@ def monthly_noon_peak_analyze(year, month, component):
     #print(dst_data)
 
     bad_data_days = bad_data.get_sun_rise_noon_peak_bad_data_days('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
-    #plotter.montly_peak_noon_height_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days)    
-    plotter.montly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days)
+    
+    df_ee_index = magdasDB.getEEIndex('CMB',year='2016')
+    df_ee_index = processor.get_ee_index_data_in_range(df_ee_index, dataFrame.index.values[0], dataFrame.index.values[-1])
+
+    plotter.montly_peak_noon_height_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)    
+    #plotter.montly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)
 
 def daily_noon_analyze(year, month, day, component):
     

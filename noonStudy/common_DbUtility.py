@@ -121,9 +121,14 @@ def getEEIndexFileNameList(stationList, stationCode, minOrSecDB, year=None, targ
         if targetTimeZone == pytz.UTC :
             print('Requested time zone = ' + timeZoneOffeset + ' (default)')
             if year :
+                import calendar as calendar
                 # file list for year
-                print('Generating file list for year ' + year + '. No extra file append needed (since UTC).')
-                pass
+                fileList = []
+                for m in range(1, 13):                
+                    daysCountForMonth = calendar.monthrange(int(year), m)[1]
+                    for d in range(1, (daysCountForMonth + 1)):
+                        fileList.append(filePath + getEEIndexDayFileName(stationCode, datetime(int(year), m, d)))
+                return fileList
             else :
                 print('Generating file list from all data files.')
                 pass
@@ -140,12 +145,12 @@ def getEEIndexFileNameList(stationList, stationCode, minOrSecDB, year=None, targ
                     print('Generating file list for year ' + year + '. Previous day file appending.')
                     firstDayOfYear = datetime(int(year), 1, 1)
                     previousDayOf1st = firstDayOfYear - timedelta(days=1)                    
-                    previousDayOfFirstDayFile= filePath + getDayFileName(stationCode, previousDayOf1st)
+                    previousDayOfFirstDayFile= filePath + getEEIndexDayFileName(stationCode, previousDayOf1st)
                     fileList = [previousDayOfFirstDayFile]
                     for m in range(1, 13):                
                         daysCountForMonth = calendar.monthrange(int(year), m)[1]
                         for d in range(1, (daysCountForMonth + 1)):
-                            fileList.append(filePath + getDayFileName(stationCode, datetime(int(year), m, d)))
+                            fileList.append(filePath + getEEIndexDayFileName(stationCode, datetime(int(year), m, d)))
                     return fileList
                 elif timeZoneOffeset[0]=='-':
                     # append next day
@@ -155,8 +160,8 @@ def getEEIndexFileNameList(stationList, stationCode, minOrSecDB, year=None, targ
                     for m in range(1, 13):                
                         daysCountForMonth = calendar.monthrange(int(year), m)[1]
                         for d in range(1, (daysCountForMonth + 1)):
-                            fileList.append(filePath + getDayFileName(stationCode, datetime(int(year), m, d)))
-                    fileList.append(filePath + getDayFileName(stationCode, nextDayOf31st))
+                            fileList.append(filePath + getEEIndexDayFileName(stationCode, datetime(int(year), m, d)))
+                    fileList.append(filePath + getEEIndexDayFileName(stationCode, nextDayOf31st))
                     return fileList
             else:
                 print('Generating file list from all data files.')

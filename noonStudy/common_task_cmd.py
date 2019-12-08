@@ -82,5 +82,26 @@ if command == 'generate_manual_remove_file':
 if command=='read_ee_index_data':
     import common_MagdasDB as magdasDB
     import pytz as pytz
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import common_DataProcess as processor
+    from datetime import datetime
 
-    df_ee_index = magdasDB.getEEIndex('CMB',year='2016', targetTimeZone=pytz.timezone('Asia/Colombo'))
+    df_ee_index = magdasDB.getEEIndex('CMB',year='2016')
+    #outliers = processor.get_outliers_confirmed_in_range('CMB', utc_start_time=df_ee_index.index.values[0], utc_end_time=df_ee_index.index.values[-1])
+    df_ee_index = processor.get_ee_index_data_in_range(df_ee_index, datetime(year=2016,month=1, day=1), datetime(year=2016, month=12, day=31, hour=23, minute=59))
+
+    #df_ee_index = df_ee_index.loc[df_ee_index.EUEL<99000]
+    print(df_ee_index)
+    fig, axs = plt.subplots(4, 1, sharex=True)
+    fig.subplots_adjust(hspace=0)
+    axs[0].plot(df_ee_index.index, df_ee_index['EUEL'], label='EUEL')
+    axs[1].plot(df_ee_index.index, df_ee_index['ER'], label='ER')
+    axs[2].plot(df_ee_index.index, df_ee_index['EDst6h'], label='EDst6h')
+    axs[3].plot(df_ee_index.index, df_ee_index['EDst1h'], label='EDst1h')
+    axs[0].legend()
+    axs[1].legend()
+    axs[2].legend()
+    axs[3].legend()
+    #plt.plot(df_ee_index.index, df_ee_index['EUEL'])
+    plt.show()
