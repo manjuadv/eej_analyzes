@@ -110,7 +110,7 @@ def dailyVariationAnalyzes(dataFrame, componentName, outliers):
     plt.legend()
     plt.show()
 
-def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None, ee_index=None):
+def noon_peak_deviation_analyzes_date_range(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None, ee_index=None):
 
     from astroplan import Observer
     import astropy.units as u
@@ -155,8 +155,8 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=
         if noonTimeRow.empty:
             print('Noon time data is not available for the date {0}'.format(noonTimeLocal.strftime('%Y-%m-%d %z')))
         else:
-            axs[0].axvline(x=noonTimeRow['Date_Time'][0], ls='--', c='orange')
-            axs[0].axvline(x=day_data_row['Max_Time'], ls='--', c='green')
+            #axs[0].axvline(x=noonTimeRow['Date_Time'][0], ls='--', c='orange')
+            #axs[0].axvline(x=day_data_row['Max_Time'], ls='--', c='green')
             date_max_values.loc[day, 'Peak_Height'] = day_data_row['Max_Value'] - noonTimeRow[comp_name][0]
             date_max_values.loc[day, 'Peak_distance'] = (noonTimeRow['Date_Time'][0] - day_data_row['Max_Time']).total_seconds()/60
             print('Noon at : {0} , max at : {1} , noon val : {2:5.2f} , max val : {3:5.2f}'.format(noonTimeRow['Date_Time'][0].strftime('%Y-%m-%d %H:%M:%S %z'),
@@ -189,15 +189,31 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=
     axs[2].set_ylabel(comp_name + ' peak distance (mins)')
     date_max_values['Peak_distance_SMA_3'] = date_max_values.iloc[:,3].rolling(window=3).mean()
     axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance_SMA_3'], label= 'SMA(3)')
+    y_min_axs_2, y_max_axs_2 = axs[2].get_ylim()
 
     if dst_data is not None:
         dst_data.loc[(dst_data['Dst']>-40), 'Dst'] = np.nan
-        c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), dst_data['Dst'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
-        fig.colorbar(c_graph, ax=axs)
 
     if ee_index is not None:
-        axs[3].plot(ee_index.index, ee_index['EUEL'], label= 'EUEL')
+        axs[3].plot(ee_index.index, ee_index['EUEL'], label='_nolegend_')
         axs[3].set_ylabel('EUEL (nT)')
+        #axs[3].set_title('EUEL')
+        axs[3].text(0.5, 0.95, 'EUEL', ha='center', va='top', transform=axs[3].transAxes)
+
+
+        import matplotlib.colors
+        cmap = plt.cm.YlOrRd_r
+        eDst_lines = ee_index.loc[(ee_index['EDst1h']<=-40)]
+        norm = matplotlib.colors.Normalize(vmin=eDst_lines['EDst1h'].min(), vmax=-40)
+        kw = dict(alpha=0.3)
+        axs[0].vlines(eDst_lines.index.values, y_min, y_max, color=cmap(norm(eDst_lines['EDst1h'].values)),**kw)
+
+        #ee_index.loc[(ee_index['EDst1h']>-40), 'EDst1h'] = np.nan
+        #c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), ee_index['EDst1h'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
+        #fig.colorbar(c_graph, ax=axs)
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])  # only needed for matplotlib < 3.1
+        fig.colorbar(sm, ax=axs)
 
     start_date = datetime(year=data_frame['Date_Time'][0].year, month=data_frame['Date_Time'][0].month, day=data_frame['Date_Time'][0].day, tzinfo=localTZ)
     end_date_obj = data_frame['Date_Time'][- 1]
@@ -205,6 +221,10 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=
     moon_phases = astro.moon_get_moon_phase_range_data_frame(start_date, end_date)
     moon_phases['Plot_val'] = y_min + (moon_phases['Phase'] * ((y_max - y_min) / 4))
     axs[0].plot(moon_phases.index.values, moon_phases['Plot_val'], label= 'Moon phase')
+
+    moon_phase_peak_lines = moon_phases.loc[(moon_phases['Peak']=='High') | (moon_phases['Peak']=='Low')].index.values
+    axs[1].vlines(moon_phase_peak_lines, y_min_axs_1, y_max_axs_1, linestyles='--', colors='gray')
+    axs[2].vlines(moon_phase_peak_lines, y_min_axs_2, y_max_axs_2, linestyles='--', colors='gray')
     
     axs[0].legend()
     axs[1].legend()
@@ -216,109 +236,7 @@ def montly_peak_noon_height_variatoin(data_frame, comp_name, outliers, dst_data=
     plt.suptitle('Monthly noon peak variation analyzes : Component ' + comp_name + ' - ' + dayDateTimeObj.strftime('%Y %B'))
     plt.show()
 
-def montly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None, ee_index=None):
-    
-    from astroplan import Observer
-    import astropy.units as u
-    from astropy.time import Time
-    import pytz
-    from datetime import timedelta, date, datetime
-    import pandas as pd
-    import matplotlib.dates as mdates
-    import numpy as np
-    import helper_astro as astro    
-
-    dayDateTimeObj = data_frame['Date_Time'][0]
-    localTZ = dayDateTimeObj.tzinfo
-    subaru = Observer(longitude=80.07*u.deg, latitude=6.97*u.deg, elevation=0*u.m, name="Subaru", timezone=localTZ)
-
-    fig, axs = plt.subplots(4, 1, sharex=True)
-    fig.subplots_adjust(hspace=0)
-    axs[0].plot(data_frame['Date_Time'], data_frame[comp_name], label= comp_name + ' Comp')
-    axs[0].set_ylabel(comp_name + ' Component (nT)')
-    days = mdates.DayLocator(interval = 1)
-    h_fmt = mdates.DateFormatter('%Y-%m-%d', localTZ)
-    axs[0].xaxis.set_major_locator(days)
-    axs[0].xaxis.set_major_formatter(h_fmt)
-    y_min, y_max = axs[0].get_ylim()
-
-    if outliers is not None:
-        outliers[comp_name] = y_min
-        kw = dict(marker='o', linestyle='none', color='r', alpha=0.3)
-        axs[0].plot(outliers[comp_name] , label= comp_name + '-outlier', **kw)
-
-    date_max_values = get_max_of_day(data_frame,comp_name)
-    #print(date_max_values)
-
-    for day, day_data_row in date_max_values.iterrows():
-        # print('Max time of day ' + day.strftime('%Y-%m-%d %H:%M:%S %z') + ' ' + day_data_row['Max_Time'].strftime('%Y-%m-%d %H:%M:%S %z')
-        # + ' value : ' + str(day_data_row['Max_Value']))
-        sunRiseTimeLocal = subaru.sun_rise_time(Time(day), which="next").to_datetime(localTZ)
-        # print('Sun rise time (local time zone) : ' + sunRiseTimeLocal.strftime('%Y-%m-%d %H:%M:%S %z'))
-        
-        axs[0].axvline(x=day_data_row['Max_Time'], ls='--', c='green')
-
-        sunRiseTimeRow = data_frame.loc[(data_frame['Date_Time'] == sunRiseTimeLocal.replace(second=0, microsecond=0))]
-        if sunRiseTimeRow.empty:
-            print('Sunrise time data is not available for the date {0}'.format(sunRiseTimeLocal.strftime('%Y-%m-%d %z')))
-        else:
-            axs[0].axvline(x=sunRiseTimeRow['Date_Time'][0], ls='--', c='orange')
-            print(day_data_row)
-            date_max_values.loc[day, 'Peak_Height'] = day_data_row['Max_Value'] - sunRiseTimeRow[comp_name][0]      
-            date_max_values.loc[day, 'Peak_distance'] = (day_data_row['Max_Time'] - sunRiseTimeRow['Date_Time'][0]).total_seconds()/60
-            # print('Sun-rise to peak time diff in minutes (HH:MM) : {0:3.0f}, peak height {1:4.0f}'.format(date_max_values.loc[day, 'Peak_distance'], date_max_values.loc[day, 'Peak_Height']))
-
-        date_max_values.loc[day, 'Plot_Time'] = day.replace(hour=12)
-
-    print(date_max_values)
-
-    if bad_data_days is not None:
-            for index, row in bad_data_days.iterrows():                
-                date_max_values.loc[((date_max_values.index.year == index.year) & (date_max_values.index.month == index.month) & (date_max_values.index.day == index.day)), ['Peak_Height', 'Peak_distance']] = np.nan
-
-    axs[1].plot(date_max_values['Plot_Time'], date_max_values['Peak_Height'], label= 'sunrise-peak height')
-    axs[1].set_ylabel(comp_name + ' magnitude (nT)')
-    date_max_values['Peak_Height_SMA_3'] = date_max_values.iloc[:,2].rolling(window=3).mean()
-    axs[1].plot(date_max_values['Plot_Time'], date_max_values['Peak_Height_SMA_3'], label= 'SMA(3)')
-    y_min_axs_1, y_max_axs_1 = axs[1].get_ylim()
-
-    if bad_data_days is not None:
-        bad_data_days['Val'] = y_min_axs_1
-        kw = dict(marker='o', linestyle='none', color='b', alpha=0.3)
-        axs[1].plot(bad_data_days.index.values, bad_data_days['Val'] , label= comp_name + '-outlier', **kw)
-
-    axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance'], label= 'sunrise-peak distance(mins)')
-    axs[2].set_ylabel(comp_name + ' peak distance (mins)')
-    date_max_values['Peak_distance_SMA_3'] = date_max_values.iloc[:,3].rolling(window=3).mean()
-    axs[2].plot(date_max_values['Plot_Time'], date_max_values['Peak_distance_SMA_3'], label= 'SMA(3)')
-
-    if dst_data is not None:
-        dst_data.loc[(dst_data['Dst']>-40), 'Dst'] = np.nan
-        c_graph = axs[0].pcolorfast(axs[0].get_xlim(), axs[0].get_ylim(), dst_data['Dst'].values[np.newaxis], cmap='RdYlGn', alpha=0.5)
-        fig.colorbar(c_graph, ax=axs)
-    
-    if ee_index is not None:
-        axs[3].plot(ee_index.index, ee_index['EUEL'], label= 'EUEL')
-        axs[3].set_ylabel('EUEL (nT)')
-
-    start_date = datetime(year=data_frame['Date_Time'][0].year, month=data_frame['Date_Time'][0].month, day=data_frame['Date_Time'][0].day, tzinfo=localTZ)
-    end_date_obj = data_frame['Date_Time'][- 1]
-    end_date = datetime(year=end_date_obj.year, month=end_date_obj.month, day=end_date_obj.day, tzinfo=localTZ)
-    moon_phases = astro.moon_get_moon_phase_range_data_frame(start_date, end_date)
-    moon_phases['Plot_val'] = y_min + (moon_phases['Phase'] * ((y_max - y_min) / 4))
-    axs[0].plot(moon_phases.index.values, moon_phases['Plot_val'], label= 'Moon phase')
-
-    axs[0].legend()
-    axs[1].legend()
-    axs[2].legend()
-    axs[3].legend()
-
-    plt.xlabel('Time (days)')
-    plt.xticks( rotation= 90 )
-    plt.suptitle('Monthly sunrise-noon variation analyzes : Component ' + comp_name + ' - ' + dayDateTimeObj.strftime('%Y %B'))
-    plt.show()
-
-def yearly_sun_rise_peak_variatoin(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None, ee_index=None):
+def rise_peak_variatoin_date_range(data_frame, comp_name, outliers, dst_data=None, bad_data_days=None, ee_index=None):
     
     from astroplan import Observer
     import astropy.units as u

@@ -17,8 +17,16 @@ def processArgvs(argvs):
     elif '-' in argvs[0] :
 
         component = 'H'
-        if len(argvs)>1:
+        analyze_type = None
+        if len(argvs)==2:
             component  = argvs[1].upper()
+            if component not in ['H','D','Z','F']:
+                component = 'H'
+                analyze_type  = argvs[1].lower()
+        elif len(argvs)==3:
+            component  = argvs[1].upper()
+            analyze_type  = argvs[2].lower()
+
         parts = argvs[0].split("-")
         if len(parts) > 2:
             year = parts[0]
@@ -36,20 +44,27 @@ def processArgvs(argvs):
             if len(month) < 2:
                 month = '0' + month
 
-            monthly_noon_peak_analyze(year, month, component)
+            monthly_noon_peak_analyze(year, month, component, analyze_type)
 
     elif len(argvs[0]) == 4 and is_number(argvs[0]):
         year = argvs[0]
         
         component = 'H'
-        if len(argvs)>1:
+        analyze_type = None
+        if len(argvs)==2:
             component  = argvs[1].upper()
+            if component not in ['H','D','Z','F']:
+                component = 'H'
+                analyze_type  = argvs[1].lower()
+        elif len(argvs)==3:
+            component  = argvs[1].upper()
+            analyze_type  = argvs[2].lower()
         
-        yearly_noon_peak_analyze(year, component)
+        yearly_noon_peak_analyze(year, component, analyze_type)
     else:
         print('Incorrect combination of parameters. First paramter supposed to be a date.')
 
-def yearly_noon_peak_analyze(year, component):
+def yearly_noon_peak_analyze(year, component, analyze_type=None):
     
     import numpy as np
     import common_DataProcess as processor
@@ -70,9 +85,12 @@ def yearly_noon_peak_analyze(year, component):
     df_ee_index = processor.get_ee_index_data_in_range(df_ee_index, dataFrame.index.values[0], dataFrame.index.values[-1])
 
     bad_data_days = bad_data.get_sun_rise_noon_peak_bad_data_days('CMB', utc_start_time=dataFrame.index.values[0], utc_end_time=dataFrame.index.values[-1])
-    plotter.yearly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)
+    if analyze_type is None or analyze_type=='rise-peak':
+        plotter.rise_peak_variatoin_date_range(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)
+    else:
+        plotter.noon_peak_deviation_analyzes_date_range(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)
 
-def monthly_noon_peak_analyze(year, month, component):
+def monthly_noon_peak_analyze(year, month, component, analyze_type=None):
     
     import numpy as np
     import common_DataProcess as processor
@@ -101,8 +119,11 @@ def monthly_noon_peak_analyze(year, month, component):
     df_ee_index = magdasDB.getEEIndex('CMB',year='2016')
     df_ee_index = processor.get_ee_index_data_in_range(df_ee_index, dataFrame.index.values[0], dataFrame.index.values[-1])
 
-    plotter.montly_peak_noon_height_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)    
-    #plotter.montly_sun_rise_peak_variatoin(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)
+    if analyze_type is None or analyze_type=='rise-peak':
+        plotter.rise_peak_variatoin_date_range(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)
+    else:
+        plotter.noon_peak_deviation_analyzes_date_range(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)    
+    #plotter.rise_peak_variatoin_date_range(dataFrame, component, outliers, dst_data, bad_data_days=bad_data_days, ee_index=df_ee_index)
 
 def daily_noon_analyze(year, month, day, component):
     
